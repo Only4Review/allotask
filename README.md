@@ -11,7 +11,7 @@ We do few-shot image classification experiments on the commonly used datasets **
 * To run Cifar experiments: 
 `python ./experiment/CifarExperiment.py`
 * To run mini-ImageNet experiments:
-`python ./experiment/miniImageNetExperiment.py`
+`python ./experiment/ImagenetExperiment.py`
 
 ## How to visualize the results
 * We provide visualization scripts used to generate figures in the submission:
