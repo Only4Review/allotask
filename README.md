@@ -12,7 +12,7 @@ We do few-shot image classification experiments on the commonly used datasets **
 `python ./experiment/CifarExperiment.py`
 * To run mini-ImageNet experiments:
 `python ./experiment/ImagenetExperiment.py`
-
+* For *infinite* budget, one needs to specify `no_tasks=-1` in the script.
 ## How to visualize the results
 * We provide visualization scripts used to generate figures in the submission:
   * `python ./utils/visual_inspection.py`
