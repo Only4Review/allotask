@@ -13,6 +13,10 @@ We do few-shot image classification experiments on the commonly used datasets **
 * To run mini-ImageNet experiments:
 `python ./experiment/ImagenetExperiment.py`
 * For *infinite* budget, one needs to specify `no_tasks=-1` in the script.
+
+## Exemplar results
+We provide some experimental results in *results* which can be used to generate Figure 3A in the manuscript. We cannot provide all the results here due to the space limit.
+
 ## How to visualize the results
 * We provide visualization scripts used to generate figures in the submission:
   * `python ./utils/visual_inspection.py`
