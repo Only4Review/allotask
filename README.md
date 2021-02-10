@@ -7,11 +7,11 @@ This anonymous repository contains the code for reproducing the experimental res
 We do few-shot image classification experiments on the commonly used datasets **Cifar-FS** and **mini-ImageNet** [Download](https://github.com/bertinetto/r2d2).
 ## How to run the experiments
 * To run Sinusoid regression experiments:
-`python ./experiment/SinusoidExperiment.py --budget 1000`
+`python ./experiment/SinusoidExperiment.py [--budget 1000]`
 * To run Cifar experiments: 
-`python ./experiment/CifarExperiment.py --budget 1000 --num_datapoints_per_class 10`
+`python ./experiment/CifarExperiment.py [--budget 1000 --num_datapoints_per_class 10]`
 * To run mini-ImageNet experiments:
-`python ./experiment/ImagenetExperiment.py`
+`python ./experiment/ImagenetExperiment.py [--budget 1000]`
 * For *infinite* budget, one needs to specify `no_tasks=-1` in the script.
 
 ## Exemplar results
