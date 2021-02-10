@@ -9,7 +9,7 @@ We do few-shot image classification experiments on the commonly used datasets **
 * To run Sinusoid regression experiments:
 `python ./experiment/SinusoidExperiment.py --budget 1000`
 * To run Cifar experiments: 
-`python ./experiment/CifarExperiment.py --budget 1000 --no_of_datapoints 10`
+`python ./experiment/CifarExperiment.py --budget 1000 --num_datapoints_per_class 10`
 * To run mini-ImageNet experiments:
 `python ./experiment/ImagenetExperiment.py`
 * For *infinite* budget, one needs to specify `no_tasks=-1` in the script.
