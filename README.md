@@ -6,6 +6,9 @@ This anonymous repository contains the code for reproducing the experimental res
 ## Prepare datasets for few-shot image classification
 We do few-shot image classification experiments on the commonly used datasets **Cifar-FS** and **mini-ImageNet** [Download](https://github.com/bertinetto/r2d2).
 ## How to run the experiments
+* To run linear regression experiments:
+`python ./experiment/LinearRegression.py`
+ *Hyperparameters are defined in the first lines and the last line saves the loss (train and test) and the hyperparameters in a single file.*
 * To run Sinusoid regression experiments:
 `python ./experiment/SinusoidExperiment.py [--budget 1000]`
 * To run Cifar experiments: 
