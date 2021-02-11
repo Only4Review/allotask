@@ -8,7 +8,7 @@ We do few-shot image classification experiments on the commonly used datasets **
 ## How to run the experiments
 * To run linear regression experiments:
 `python ./experiment/LinearRegression.py`
- *Hyperparameters are defined in the first lines and the last line saves the loss (train and test) and the hyperparameters in a single file.*
+ (*Hyperparameters are defined in the first lines and the last line saves the loss (train and test) and the hyperparameters in a single file.*)
 * To run Sinusoid regression experiments:
 `python ./experiment/SinusoidExperiment.py [--budget 1000]`
 * To run Cifar experiments: 
