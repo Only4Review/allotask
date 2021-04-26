@@ -337,56 +337,53 @@ class CifarBatchSampler(Sampler):
 
             yield indices_list
 
-       ass TaskCombinations():
-      def __init__(self, hierarchy_json='hierarchy.json',is_hard=True, classes_per_task=5, mode='Train'):
-          '''
-          hierarchy_json: json file -  json that contains the data structure.
-          classes_per_task: positive int - number of classes in each task
-          mode - string -'Train', 'Test','Val', 'Mix'. With 'mix' clases are share between, train, test and validation
-          '''
-          self.is_hard = is_hard
-          self.classes_per_task = classes_per_task
-          with open(hierarchy_json) as json_file:
-              data = json.load(json_file)
-          self.hyperclass_strucutre = data[mode]
-          self.max_no_of_hard_tasks = sum([int(math.factorial(len(self.hyperclass_strucutre[key]))/(math.factorial(len(self.hyperclass_strucutre[key])-
-                               self.classes_per_task)*math.factorial(self.classes_per_task))) if len(self.hyperclass_strucutre[key]) >=
-                               self.classes_per_task else 0 for key in self.hyperclass_strucutre])
-          for key, value in self.hyperclass_strucutre.items() :
-              self.hard_tasks_list +=list(itertools.combinations(value, self.classes_per_task))
-               self._tasks_classes += value
-
-          random.seed(SEED)
-          random.shuffle( self.hard_tasks_list)
-
-      def generate_task_parametrizations(self, is_hard, no_of_tasks = 100):
-          '''
-          is_hard: Bool - True if we want to produce hard tasks
-          no_of_tasks: positive integer - initial number of tasks to sample.
-          '''
-              hard_tasks_list = []
-              _tasks_classes = []
-              if self.is_hard:
-                  try:
-                      if self.max_no_of_hard_tasks <= no_of_tasks:
-                          raise ValueError('Not enougt hard tasks available')
-                  except ValueError as ve:
-                       print(ve)
-                  self.task_parameterisation_array =  self.hard_tasks_list[0:no_of_tasks]
-              else:
-                  all_tasks_list = list(itertools.combinations(_tasks_classes, self.classes_per_task))
-                  easy_tasks_list = list (set(all_tasks_list)-set (hard_tasks_list) )
-
-                  try:
-                      if len(easy_tasks_list) <= no_of_tasks:
-                          raise ValueError('Not enougt easy tasks available')
-                  except ValueError as ve:
-                       print(ve)
-
-                  random.shuffle( easy_tasks_list)
-                  self.task_parameterisation_array =  easy_tasks_list[0:no_of_tasks]
-
-
+class TaskCombinations():
+    def __init__(self, hierarchy_json='hierarchy.json',is_hard=True, classes_per_task=5, mode='Train'):
+        '''
+        hierarchy_json: json file -  json that contains the data structure.
+        is_hard: Bool - True if we want to produce hard tasks
+        classes_per_task: positive int - number of classes in each task
+        mode - string -'Train', 'Test','Val', 'Mix'. With 'mix' clases are share between, train, test and validation
+        Returns: list of tuples
+        '''    
+        self.is_hard = is_hard
+        self.classes_per_task = classes_per_task
+        with open(hierarchy_json) as json_file: 
+            data = json.load(json_file) 
+        self.hyperclass_strucutre = data[mode]
+        self.max_no_of_hard_tasks = sum([int(math.factorial(len(self.hyperclass_strucutre[key]))/(math.factorial(len(self.hyperclass_strucutre[key])-
+                             self.classes_per_task)*math.factorial(self.classes_per_task))) if len(self.hyperclass_strucutre[key]) >= 
+                             self.classes_per_task else 0 for key in self.hyperclass_strucutre])
+    
+    def generate_task_parametrizations(self, no_of_tasks = 100):
+            hard_tasks_list = []
+            _tasks_classes = []
+            for key, value in self.hyperclass_strucutre.items() :
+                hard_tasks_list +=list(itertools.combinations(value, self.classes_per_task))
+                _tasks_classes += value
+        
+            random.seed(SEED)
+            random.shuffle( hard_tasks_list)
+           
+            if self.is_hard:          
+                try:
+                    if self.max_no_of_hard_tasks <= no_of_tasks:
+                        raise ValueError('Not enougt hard tasks available')
+                except ValueError as ve:
+                     print(ve)
+                self.task_parameterisation_array =  hard_tasks_list[0:no_of_tasks]
+            else:      
+                all_tasks_list = list(itertools.combinations(_tasks_classes, self.classes_per_task))
+                easy_tasks_list = list (set(all_tasks_list)-set (hard_tasks_list) )
+                
+                try:
+                    if len(easy_tasks_list) <= no_of_tasks:
+                        raise ValueError('Not enougt easy tasks available')
+                except ValueError as ve:
+                     print(ve)
+                
+                random.shuffle( easy_tasks_list)
+                self.task_parameterisation_array =  easy_tasks_list[0:no_of_tasks]
 """
 CifarDataset = CifarStaticDataset(root_dir, 'train', no_of_tasks=12, classes_per_task=5, no_of_data_points_per_task=42)
 CifarSampler = CifarBatchSampler(data_source = CifarDataset, no_of_tasks = None, no_of_data_points_per_task = None)
