@@ -15,6 +15,12 @@ from PIL import Image
 import os
 import operator as op
 from functools import reduce
+import json
+import math
+import itertools
+import random
+SEED = 0 #it could be also a variable in the parametrizarion function
+
 
 
 def n_choose_r(n, r):
@@ -65,6 +71,7 @@ class CifarStaticDataset(StaticMetaDataset):
     '''
     def __init__(self, root_dir, mode, no_of_tasks, classes_per_task, no_of_data_points_per_task):
         '''
+        # J: add the ratio between hard and easy tasks?
         no_of_tasks: positive integer - initial number of tasks to sample.
         no_of_data_points_per_task - positive int.
         '''
@@ -81,6 +88,8 @@ class CifarStaticDataset(StaticMetaDataset):
         else:
             self.no_of_tasks = no_of_tasks
             self.infiniteTask = False
+        #J: Initialize the task alocation class, call it twice one for easy and other for hard, join self.task_dataset_array using 
+        #np.concatenate((a, b), axis=0) 
         self.no_of_data_points_per_task = no_of_data_points_per_task
         self.task_parametrization_array = self.generate_task_parametrizations(self.no_of_tasks)
         self.task_dataset_array = self.generate_task_datasets(self.task_parametrization_array, self.no_of_data_points_per_task)
@@ -101,7 +110,7 @@ class CifarStaticDataset(StaticMetaDataset):
             assert available_tasks >= no_of_tasks, "no_of_tasks greater than available"
         
         except AssertionError:
-            no_of_tasks = available_tasks
+            no_of_tasks = available_tasksi
             print('no_of_tasks set to num of available tasks: %d' % no_of_tasks)
             
             if no_of_tasks == 0:
@@ -328,6 +337,54 @@ class CifarBatchSampler(Sampler):
 
             yield indices_list
 
+       ass TaskCombinations():
+      def __init__(self, hierarchy_json='hierarchy.json',is_hard=True, classes_per_task=5, mode='Train'):
+          '''
+          hierarchy_json: json file -  json that contains the data structure.
+          classes_per_task: positive int - number of classes in each task
+          mode - string -'Train', 'Test','Val', 'Mix'. With 'mix' clases are share between, train, test and validation
+          '''
+          self.is_hard = is_hard
+          self.classes_per_task = classes_per_task
+          with open(hierarchy_json) as json_file:
+              data = json.load(json_file)
+          self.hyperclass_strucutre = data[mode]
+          self.max_no_of_hard_tasks = sum([int(math.factorial(len(self.hyperclass_strucutre[key]))/(math.factorial(len(self.hyperclass_strucutre[key])-
+                               self.classes_per_task)*math.factorial(self.classes_per_task))) if len(self.hyperclass_strucutre[key]) >=
+                               self.classes_per_task else 0 for key in self.hyperclass_strucutre])
+          for key, value in self.hyperclass_strucutre.items() :
+              self.hard_tasks_list +=list(itertools.combinations(value, self.classes_per_task))
+               self._tasks_classes += value
+
+          random.seed(SEED)
+          random.shuffle( self.hard_tasks_list)
+
+      def generate_task_parametrizations(self, is_hard, no_of_tasks = 100):
+          '''
+          is_hard: Bool - True if we want to produce hard tasks
+          no_of_tasks: positive integer - initial number of tasks to sample.
+          '''
+              hard_tasks_list = []
+              _tasks_classes = []
+              if self.is_hard:
+                  try:
+                      if self.max_no_of_hard_tasks <= no_of_tasks:
+                          raise ValueError('Not enougt hard tasks available')
+                  except ValueError as ve:
+                       print(ve)
+                  self.task_parameterisation_array =  self.hard_tasks_list[0:no_of_tasks]
+              else:
+                  all_tasks_list = list(itertools.combinations(_tasks_classes, self.classes_per_task))
+                  easy_tasks_list = list (set(all_tasks_list)-set (hard_tasks_list) )
+
+                  try:
+                      if len(easy_tasks_list) <= no_of_tasks:
+                          raise ValueError('Not enougt easy tasks available')
+                  except ValueError as ve:
+                       print(ve)
+
+                  random.shuffle( easy_tasks_list)
+                  self.task_parameterisation_array =  easy_tasks_list[0:no_of_tasks]
 
 
 """
