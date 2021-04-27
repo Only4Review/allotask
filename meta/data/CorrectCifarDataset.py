@@ -15,7 +15,10 @@ from PIL import Image
 import os
 import operator as op
 from functools import reduce
-
+import json
+import math
+import itertools
+import random
 
 def n_choose_r(n, r):
     r = min(r, n-r)
@@ -91,7 +94,7 @@ class CifarStaticDataset(StaticMetaDataset):
         self.task_dataset_array = self.generate_task_datasets(self.task_parametrization_array, self.no_of_data_points_per_task)
              
     ###########################################################################        
-    def generate_task_parametrizations(self, no_of_tasks : int):
+    def generate_task_parametrizations(self, no_of_tasks:int):
         '''
         Implementation of generate task parametrizations in base class
         '''
@@ -214,28 +217,9 @@ class CifarStaticDatasetHierarchy(CifarStaticDataset):
 
         self.classes_per_task = classes_per_task
         self.task_additions = 0
-        self.task_seed = 0 ## ?what is this for? wherent you seeding at main?
         
         self.classes_per_task = classes_per_task
-        with open(hierarchy_json) as json_file: 
-            data = json.load(json_file) 
-        
-        self.hyperclass_strucutre = data[mode] if 'Mix' not in mode else data['Mix'] 
-        
-        hard_tasks_list = []
-        _tasks_classes = []
-        for key, value in self.hyperclass_strucutre.items() :
-            hard_tasks_list +=list(itertools.combinations(value, self.classes_per_task))
-            _tasks_classes += value
-        
-        all_tasks_list = list(itertools.combinations(_tasks_classes, self.classes_per_task))
-        easy_tasks_list = list (set(all_tasks_list)-set (hard_tasks_list) )
-    
-        #This shuffle needs a seed, is random seeded on main?
-        random.shuffle( hard_tasks_list)
-        random.shuffle( easy_tasks_list)
-        self.hard_tasks_list = hard_tasks_list
-        self.easy_tasks_list = easy_tasks_list
+        self.set_hierarchy(hierarchy_json,mode)
         
         if no_of_tasks == -1:
             self.no_of_tasks = 2000
@@ -244,27 +228,31 @@ class CifarStaticDatasetHierarchy(CifarStaticDataset):
             self.no_of_tasks = no_of_easy + no_of_hard
             self.infiniteTask = False
      
-        self.task_parametrization_array_hard, self.task_parametrization_array_easy = self.generate_task_parametrizations(no_of_hard, no_of_easy, mode)
+        self.task_parametrization_array_hard, self.task_parametrization_array_easy = self.generate_task_parametrizations(no_of_hard, no_of_easy)
         self.task_parametrization_array = self.task_parametrization_array_hard + self.task_parametrization_array_easy
         self.task_dataset_array_hard = self.generate_task_datasets(self.task_parametrization_array_hard, no_data_points_hard)
         self.task_dataset_array_easy = self.generate_task_datasets(self.task_parametrization_array_easy, no_data_points_easy)
         self.task_dataset_array = np.concatenate((self.task_dataset_array_hard,self.task_dataset_array_easy), axis=0)
-        ##task_parametrization_is_hard can be use witj task_dataset_array to modify the sampler
-        self.task_parametrization_is_hard = [True]*no_of_hard + [False]*no_of_easy
         
-    def generate_task_parametrizations(self, no_of_hard : int,no_of_easy: int, mode : str):
-        if 'Mix' not in mode:
-            hard,easy =  self.hard_tasks_list, self.easy_tasks_list
-        else:
-            if 'Train' in mode:
-                hard = self.hard_tasks_list[:int(len(self.hard_tasks_list)*0.8)]
-                easy = self.easy_tasks_list[:int(len(self.easy_tasks_list)*0.8)] 
-            elif 'Test' in mode:
-                hard = self.hard_tasks_list[int(len(self.hard_tasks_list)*0.8):int(len(files)*0.9)] 
-                test = self.easy_tasks_list[int(len(self.easy_tasks_list)*0.8):int(len(files)*0.9)] 
-            else :
-                hard = self.hard_tasks_list[int(len(self.hard_tasks_list)*0.9):]
-                easy = self.easy_tasks_list[int(len(self.easy_tasks_list)*0.9):]
+    def set_hierarchy(self, hierarchy_json, mode):
+        with open(hierarchy_json) as json_file: 
+            data = json.load(json_file) 
+        hyperclass_strucutre = data[mode] if 'Mix' not in mode else data['Mix'] 
+        
+	hard_tasks_list = []
+        _tasks_classes = []
+        for key, value in hyperclass_strucutre.items():
+            hard_tasks_list +=list(itertools.combinations(value, self.classes_per_task))
+            _tasks_classes += value
+        
+	self.hard_tasks_list = hard_tasks_list
+        all_tasks_list = list(itertools.combinations(_tasks_classes, self.classes_per_task))
+        self.easy_tasks_list = list (set(all_tasks_list)- set(hard_tasks_list))
+        
+    def generate_task_parametrizations(self, no_of_hard:int, no_of_easy:int):
+        hard,easy =  self.hard_tasks_list, self.easy_tasks_list
+        random.shuffle(hard)
+        random.shuffle(easy)
         try:
             if len(hard) <= no_of_hard and not (len(easy) <= no_of_easy ):
                 raise ValueError('Not enougt hard tasks available')
