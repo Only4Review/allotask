@@ -198,6 +198,83 @@ class CifarStaticDataset(StaticMetaDataset):
         if task_increase > 0:
             self.add_new_tasks(task_increase, data_for_new_tasks//self.classes_per_task) # debugged by wangq 20/12/2020
 
+class CifarStaticDatasetHierarchy(CifarStaticDataset):
+    '''
+    Implementation of a static Cifar Dataset that takes into account the data structure to create hard and easy tasks
+    '''
+    def __init__(self, root_dir, mode, hierarchy_json, no_of_easy, no_of_hard, classes_per_task, no_data_points_hard, no_data_points_easy):
+        '''
+        root_dir: directory containing the data. CAREFUL: If mode is Mix you would like to use diferent data directories.
+        no_of_easy: positive integer - initial number of easy tasks to sample.
+        no_of_data_points_per_task - positive int.
+        root_dir - data folder
+        mode - string 'Train', 'Test','Val', 'Mix_Train','Mix_Test', 'Mix_Val'. 
+        With 'Mix' prefix clases are share between, train, test and validation  
+        '''
+
+        self.classes_per_task = classes_per_task
+        self.task_additions = 0
+        self.task_seed = 0 ## ?what is this for? wherent you seeding at main?
+        
+        self.classes_per_task = classes_per_task
+        with open(hierarchy_json) as json_file: 
+            data = json.load(json_file) 
+        
+        self.hyperclass_strucutre = data[mode] if 'Mix' not in mode else data['Mix'] 
+        
+        hard_tasks_list = []
+        _tasks_classes = []
+        for key, value in self.hyperclass_strucutre.items() :
+            hard_tasks_list +=list(itertools.combinations(value, self.classes_per_task))
+            _tasks_classes += value
+        
+        all_tasks_list = list(itertools.combinations(_tasks_classes, self.classes_per_task))
+        easy_tasks_list = list (set(all_tasks_list)-set (hard_tasks_list) )
+    
+        #This shuffle needs a seed, is random seeded on main?
+        random.shuffle( hard_tasks_list)
+        random.shuffle( easy_tasks_list)
+        self.hard_tasks_list = hard_tasks_list
+        self.easy_tasks_list = easy_tasks_list
+        
+        if no_of_tasks == -1:
+            self.no_of_tasks = 2000
+            self.infiniteTask = True
+        else:
+            self.no_of_tasks = no_of_easy + no_of_hard
+            self.infiniteTask = False
+     
+        self.task_parametrization_array_hard, self.task_parametrization_array_easy = self.generate_task_parametrizations(no_of_hard, no_of_easy, mode)
+        self.task_parametrization_array = self.task_parametrization_array_hard + self.task_parametrization_array_easy
+        self.task_dataset_array_hard = self.generate_task_datasets(self.task_parametrization_array_hard, no_data_points_hard)
+        self.task_dataset_array_easy = self.generate_task_datasets(self.task_parametrization_array_easy, no_data_points_easy)
+        self.task_dataset_array = np.concatenate((self.task_dataset_array_hard,self.task_dataset_array_easy), axis=0)
+        ##task_parametrization_is_hard can be use witj task_dataset_array to modify the sampler
+        self.task_parametrization_is_hard = [True]*no_of_hard + [False]*no_of_easy
+        
+    def generate_task_parametrizations(self, no_of_hard : int,no_of_easy: int, mode : str):
+        if 'Mix' not in mode:
+            hard,easy =  self.hard_tasks_list, self.easy_tasks_list
+        else:
+            if 'Train' in mode:
+                hard = self.hard_tasks_list[:int(len(self.hard_tasks_list)*0.8)]
+                easy = self.easy_tasks_list[:int(len(self.easy_tasks_list)*0.8)] 
+            elif 'Test' in mode:
+                hard = self.hard_tasks_list[int(len(self.hard_tasks_list)*0.8):int(len(files)*0.9)] 
+                test = self.easy_tasks_list[int(len(self.easy_tasks_list)*0.8):int(len(files)*0.9)] 
+            else :
+                hard = self.hard_tasks_list[int(len(self.hard_tasks_list)*0.9):]
+                easy = self.easy_tasks_list[int(len(self.easy_tasks_list)*0.9):]
+        try:
+            if len(hard) <= no_of_hard and not (len(easy) <= no_of_easy ):
+                raise ValueError('Not enougt hard tasks available')
+            elif len(hard) <= no_of_hard and (len(easy) <= no_of_easy ):
+                raise ValueError('Not enougt hard tasks and not enought easy tasks available')
+            elif not (len(hard) <= no_of_hard) and (len(easy) <= no_of_easy ):
+                raise ValueError('Not enougt easy tasks available')
+        except ValueError as ve:
+            print(ve)      
+        return hard[0:no_of_hard], easy[0:no_of_easy]
 
 class CifarStaticTask(Dataset):
     def __init__(self, task_parametrization: list, no_of_samples : int):
