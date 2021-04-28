@@ -221,13 +221,14 @@ class CifarStaticDatasetHierarchy(CifarStaticDataset):
         self.classes_per_task = classes_per_task
         self.set_hierarchy(hierarchy_json,mode)
         
-        if no_of_tasks == -1:
-            self.no_of_tasks = 2000
+        if (no_of_easy == -1) or (no_of_hard == -1):
+            no_of_easy = 1000
+            no_of_datapoints = 1000
             self.infiniteTask = True
         else:
-            self.no_of_tasks = no_of_easy + no_of_hard
             self.infiniteTask = False
-     
+        
+        self.no_of_tasks = no_of_easy + no_of_hard
         self.task_parametrization_array_hard, self.task_parametrization_array_easy = self.generate_task_parametrizations(no_of_hard, no_of_easy)
         self.task_parametrization_array = self.task_parametrization_array_hard + self.task_parametrization_array_easy
         self.task_dataset_array_hard = self.generate_task_datasets(self.task_parametrization_array_hard, no_data_points_hard)
@@ -238,14 +239,13 @@ class CifarStaticDatasetHierarchy(CifarStaticDataset):
         with open(hierarchy_json) as json_file: 
             data = json.load(json_file) 
         hyperclass_strucutre = data[mode] if 'Mix' not in mode else data['Mix'] 
-        
-	hard_tasks_list = []
+        hard_tasks_list = []
         _tasks_classes = []
         for key, value in hyperclass_strucutre.items():
             hard_tasks_list +=list(itertools.combinations(value, self.classes_per_task))
             _tasks_classes += value
         
-	self.hard_tasks_list = hard_tasks_list
+        self.hard_tasks_list = hard_tasks_list
         all_tasks_list = list(itertools.combinations(_tasks_classes, self.classes_per_task))
         self.easy_tasks_list = list (set(all_tasks_list)- set(hard_tasks_list))
         
