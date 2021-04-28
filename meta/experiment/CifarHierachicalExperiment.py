@@ -38,8 +38,8 @@ class CifarHierarchicalExperiment(CifarExperiment):
                 no_of_easy=self.args.num_easy, 
                 no_of_hard=self.args.num_hard,
                 classes_per_task=self.args.no_of_classes, 
-                no_data_points_hard = self.args.no_data_points_hard,
-                no_data_points_easy = self.args.no_data_points_easy,
+                no_data_points_hard = self.args.num_datapoints_per_class_hard,
+                no_data_points_easy = self.args.num_datapoints_per_class_easy,
                 )
         CifarTrainingSampler = CifarBatchSampler(data_source = CifarTrainingDataset, no_of_tasks = 25, no_of_data_points_per_task = 100)
         TrainDataloader = DataLoader(CifarTrainingDataset, batch_sampler=CifarTrainingSampler, num_workers = self.args.num_workers)
@@ -49,7 +49,7 @@ class CifarHierarchicalExperiment(CifarExperiment):
         num_hard_val = NUM_VAL_TASKS - num_easy_val
 
         NUM_VAL_DTPTSK = 10
-        num_easy_val_data = int(NUM_VAL_DTPTSK * self.args.no_data_points_easy / (self.args.no_data_points_easy + self.args.no_data_points_hard))
+        num_easy_val_data = int(NUM_VAL_DTPTSK * self.args.num_datapoints_per_class_easy / (self.args.num_datapoints_per_class_easy + self.args.num_datapoints_per_class_hard))
         num_hard_val_data = NUM_VAL_DTPTSK - num_easy_val_data
 
         CifarValidationDataset = CifarStaticDataset(
@@ -77,7 +77,7 @@ class CifarHierarchicalExperiment(CifarExperiment):
         num_hard_test = NUM_TEST_TASKS - num_easy_test
 
         NUM_TEST_DTPTSK = 10
-        num_easy_test_data = int(NUM_TEST_DTPTSK * self.args.no_data_points_easy / (self.args.no_data_points_easy + self.args.no_data_points_hard))
+        num_easy_test_data = int(NUM_TEST_DTPTSK * self.args.num_datapoints_per_class_easy / (self.args.num_datapoints_per_class_easy + self.args.num_datapoints_per_class_hard))
         num_hard_test_data = NUM_TEST_DTPTSK - num_easy_test_data
 
         CifarTestDataset = CifarStaticDataset(
@@ -142,9 +142,6 @@ if __name__ == '__main__':
     
     parser.add_argument('--max-num-epochs', type=int, default=60000,
             help='Max Number of epochs')
-    
-    parser.add_argument('--budget', type=int, default=60000,
-            help='Budget')
 
     parser.add_argument('--num_classes', type=int, default=5,
             help='Number of classes')
@@ -181,39 +178,40 @@ if __name__ == '__main__':
         print('Device: ', args.device)
     
     
-    budget = args.budget
     runs = 5
     no_of_classes = args.num_classes #it stands for N_way
     model = ConvMetaModel(3, no_of_classes) #instantiate the base learner
     
+    budget = no_of_classes * (args.num_easy * args.num_datapoints_per_class_easy + args.num_hard * args.num_datapoints_per_class_hard)
 
-    #no_of_datapoints_per_taskclass_list = [200]
-    no_of_datapoints_per_taskclass_list = [args.num_datapoints_per_class]    
-    for datapoints_per_task_per_taskclass in no_of_datapoints_per_taskclass_list:
-        for run in range(runs):
-            #no_of_tasks = -1
-            no_of_tasks = int(round(budget/(datapoints_per_task_per_taskclass*no_of_classes)))
-            if no_of_tasks < 1:
-                break
-            config = {'dataset': 'Cifar', 'ExperimentType': 'BaselineExperiment', 'budget': budget,
-	              'no_of_classes': no_of_classes, 'no_of_tasks':no_of_tasks, 
-	              'datapoints_per_task_per_taskclass':datapoints_per_task_per_taskclass, 'run':run}
-            
-            print(config)
-            
-            updated_args = CifarExperiment.update_args_from_config(args, config)
-            
-            model_copy = type(model)(3, no_of_classes) # get a new instance
-            model_copy.load_state_dict(model.state_dict()) # copy weights
-            train_op = ClassificationMAMLTrainOP(model_copy, updated_args)
-            exp = CifarExperiment(args, config, train_op)
-            
-            #---training----
-            exp.setup_logs()
-            exp.run()
-            
-            #---evaluation---
-            #exp.setup_logs(init=False)
-            exp.evaluate()
+    for run in range(runs):
+        config = {
+                'dataset': 'Cifar', 
+                'ExperimentType': 'BaselineExperiment', 
+                'budget': budget,
+                'no_of_classes': no_of_classes, 
+                'no_of_easy_tasks': args.num_easy,
+                'no_of_hard_tasks': args.num_hard,
+                'no_of_datapoints_per_easy_tasks': args.num_datapoints_per_class_easy,
+                'no_of_datapoints_per_hard_tasks': args.num_datapoints_per_class_hard,
+                'run':run
+        }
+        
+        print(config)
+        
+        updated_args = CifarExperiment.update_args_from_config(args, config)
+        
+        model_copy = type(model)(3, no_of_classes) # get a new instance
+        model_copy.load_state_dict(model.state_dict()) # copy weights
+        train_op = ClassificationMAMLTrainOP(model_copy, updated_args)
+        exp = CifarExperiment(args, config, train_op)
+        
+        #---training----
+        exp.setup_logs()
+        exp.run()
+        
+        #---evaluation---
+        #exp.setup_logs(init=False)
+        exp.evaluate()
         
     
