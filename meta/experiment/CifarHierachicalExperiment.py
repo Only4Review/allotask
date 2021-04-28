@@ -8,7 +8,7 @@ from meta.train_ops.ClassificationMAMLTrainOP import ClassificationMAMLTrainOP
 #dataloader related modules
 from meta.data.StaticDataset import SinusoidStaticDataset, FullBatchSampler
 from torch.utils.data.dataloader import DataLoader
-from meta.data.CorrectCifarDataset import CifarStaticDataset, CifarBatchSampler
+from meta.data.CorrectCifarDataset import CifarStaticDatasetHierarchy, CifarBatchSampler
 
 from torch.nn import CrossEntropyLoss
 from meta.meta_learners.ClassificationMetaModel import ConvMetaModel
@@ -32,21 +32,64 @@ class CifarHierarchicalExperiment(CifarExperiment):
         
     def run(self):
         #train for the current configuration
-        CifarTrainingDataset = CifarStaticDataset(self.args.root_dir, 'train', no_of_tasks=self.args.no_of_tasks, classes_per_task=self.args.no_of_classes, no_of_data_points_per_task=self.args.datapoints_per_task_per_taskclass)
+        CifarTrainingDataset = CifarStaticDataset(
+                'Train', 
+                self.args.hierarchy_json, 
+                no_of_easy=self.args.num_easy, 
+                no_of_hard=self.args.num_hard,
+                classes_per_task=self.args.no_of_classes, 
+                no_data_points_hard = self.args.no_data_points_hard,
+                no_data_points_easy = self.args.no_data_points_easy,
+                )
         CifarTrainingSampler = CifarBatchSampler(data_source = CifarTrainingDataset, no_of_tasks = 25, no_of_data_points_per_task = 100)
         TrainDataloader = DataLoader(CifarTrainingDataset, batch_sampler=CifarTrainingSampler, num_workers = self.args.num_workers)
         
-        CifarValidationDataset = CifarStaticDataset(self.args.root_dir, 'val', no_of_tasks=500, classes_per_task=self.args.no_of_classes, no_of_data_points_per_task=10)
+        NUM_VAL_TASKS = 500
+        num_easy_val = int(NUM_VAL_TASKS * self.args.num_easy / (self.args.num_hard + self.args.num_easy))
+        num_hard_val = NUM_VAL_TASKS - num_easy_val
+
+        NUM_VAL_DTPTSK = 10
+        num_easy_val_data = int(NUM_VAL_DTPTSK * self.args.no_data_points_easy / (self.args.no_data_points_easy + self.args.no_data_points_hard))
+        num_hard_val_data = NUM_VAL_DTPTSK - num_easy_val_data
+
+        CifarValidationDataset = CifarStaticDataset(
+                'Val', 
+                self.args.hierarchy_json,
+                no_of_easy=num_easy_val, 
+                no_of_hard=num_hard_val,
+                classes_per_task=self.args.no_of_classes, 
+                no_data_points_hard = num_hard_val_data,
+                no_data_points_easy = num_easy_val_data,
+                ) 
+
         CifarValidationSampler = CifarBatchSampler(data_source = CifarValidationDataset, no_of_tasks = None, no_of_data_points_per_task = None)
         ValDataloader = DataLoader(CifarValidationDataset, batch_sampler=CifarValidationSampler, num_workers = self.args.num_workers)
 
         self.train_op.train(TrainDataloader, ValDataloader)
         see.logs.cache['train_avg_accuracy'] = self.train_op.get_accuracy(TrainDataloader)
         
-    def evaluate(self,):
+    def evaluate(self):
         """this needs to be changed"""
         #--------------------------------------
-        CifarTestDataset = CifarStaticDataset(self.args.root_dir, 'test', no_of_tasks = 1000, classes_per_task=self.args.no_of_classes, no_of_data_points_per_task = 10)
+
+        NUM_TEST_TASKS = 1000
+        num_easy_test = int(NUM_TEST_TASKS * self.args.num_easy / (self.args.num_hard + self.args.num_easy))
+        num_hard_test = NUM_TEST_TASKS - num_easy_test
+
+        NUM_TEST_DTPTSK = 10
+        num_easy_test_data = int(NUM_TEST_DTPTSK * self.args.no_data_points_easy / (self.args.no_data_points_easy + self.args.no_data_points_hard))
+        num_hard_test_data = NUM_TEST_DTPTSK - num_easy_test_data
+
+        CifarTestDataset = CifarStaticDataset(
+                'Test', 
+                self.args.hierarchy_json,
+                no_of_easy=num_easy_test, 
+                no_of_hard=num_hard_test,
+                classes_per_task=self.args.no_of_classes, 
+                no_data_points_hard = num_hard_test_data,
+                no_data_points_easy = num_easy_test_data,
+                )
+
         CifarTestSampler = CifarBatchSampler(data_source = CifarTestDataset, no_of_tasks = None, no_of_data_points_per_task = None)
         TestDataloader = DataLoader(CifarTestDataset, batch_sampler=CifarTestSampler, num_workers = self.args.num_workers)
         
@@ -106,11 +149,17 @@ if __name__ == '__main__':
     parser.add_argument('--num_classes', type=int, default=5,
             help='Number of classes')
     
-    parser.add_argument('--num_tasks', type=int, default=100,
-            help='Number of tasks')
+    parser.add_argument('--num_easy', type=int, default=100,
+            help='Number of easy tasks')
 
-    parser.add_argument('--num_datapoints_per_class', type=int, default=4,
-            help='Number of data points')
+    parser.add_argument('--num_hard', type=int, default=100,
+            help='Number of hard tasks')
+
+    parser.add_argument('--num_datapoints_per_class_easy', type=int, default=4,
+            help='Number of data points per class for easy tasks')
+
+    parser.add_argument('--num_datapoints_per_class_hard', type=int, default=4,
+            help='Number of data points per class for hard tasks')
     
     parser.add_argument('--num-workers', type=int, default=8,
             help='Number of workers for data loading (default: 8).')
