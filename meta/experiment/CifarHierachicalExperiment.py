@@ -31,8 +31,9 @@ class CifarHierarchicalExperiment(CifarExperiment):
         super(CifarHierarchicalExperiment, self).__init__(*args, **kwargs)
         
     def run(self):
+        print("Start run!")
         #train for the current configuration
-        CifarTrainingDataset = CifarStaticDataset(
+        CifarTrainingDataset = CifarStaticDatasetHierarchy(
                 'Train', 
                 self.args.hierarchy_json, 
                 no_of_easy=self.args.num_easy, 
@@ -43,17 +44,20 @@ class CifarHierarchicalExperiment(CifarExperiment):
                 )
         CifarTrainingSampler = CifarBatchSampler(data_source = CifarTrainingDataset, no_of_tasks = 25, no_of_data_points_per_task = 100)
         TrainDataloader = DataLoader(CifarTrainingDataset, batch_sampler=CifarTrainingSampler, num_workers = self.args.num_workers)
+
+        print("debugging 1")
+        print(len(CifarTrainingDataset.task_dataset_array))
         
         NUM_VAL_TASKS = 500
         num_easy_val = int(NUM_VAL_TASKS * self.args.num_easy / (self.args.num_hard + self.args.num_easy))
         num_hard_val = NUM_VAL_TASKS - num_easy_val
 
-        NUM_VAL_DTPTSK = 10
+        NUM_VAL_DTPTSK = 20
         num_easy_val_data = int(NUM_VAL_DTPTSK * self.args.num_datapoints_per_class_easy / (self.args.num_datapoints_per_class_easy + self.args.num_datapoints_per_class_hard))
         num_hard_val_data = NUM_VAL_DTPTSK - num_easy_val_data
 
-        CifarValidationDataset = CifarStaticDataset(
-                'Val', 
+        CifarValidationDataset = CifarStaticDatasetHierarchy(
+                'Test', 
                 self.args.hierarchy_json,
                 no_of_easy=num_easy_val, 
                 no_of_hard=num_hard_val,
@@ -64,6 +68,9 @@ class CifarHierarchicalExperiment(CifarExperiment):
 
         CifarValidationSampler = CifarBatchSampler(data_source = CifarValidationDataset, no_of_tasks = None, no_of_data_points_per_task = None)
         ValDataloader = DataLoader(CifarValidationDataset, batch_sampler=CifarValidationSampler, num_workers = self.args.num_workers)
+
+        print("debugging 2")
+        print(len(CifarValidationDataset.task_dataset_array))
 
         self.train_op.train(TrainDataloader, ValDataloader)
         see.logs.cache['train_avg_accuracy'] = self.train_op.get_accuracy(TrainDataloader)
@@ -76,11 +83,11 @@ class CifarHierarchicalExperiment(CifarExperiment):
         num_easy_test = int(NUM_TEST_TASKS * self.args.num_easy / (self.args.num_hard + self.args.num_easy))
         num_hard_test = NUM_TEST_TASKS - num_easy_test
 
-        NUM_TEST_DTPTSK = 10
+        NUM_TEST_DTPTSK = 20
         num_easy_test_data = int(NUM_TEST_DTPTSK * self.args.num_datapoints_per_class_easy / (self.args.num_datapoints_per_class_easy + self.args.num_datapoints_per_class_hard))
         num_hard_test_data = NUM_TEST_DTPTSK - num_easy_test_data
 
-        CifarTestDataset = CifarStaticDataset(
+        CifarTestDataset = CifarStaticDatasetHierarchy(
                 'Test', 
                 self.args.hierarchy_json,
                 no_of_easy=num_easy_test, 
@@ -93,6 +100,9 @@ class CifarHierarchicalExperiment(CifarExperiment):
         CifarTestSampler = CifarBatchSampler(data_source = CifarTestDataset, no_of_tasks = None, no_of_data_points_per_task = None)
         TestDataloader = DataLoader(CifarTestDataset, batch_sampler=CifarTestSampler, num_workers = self.args.num_workers)
         
+        print("debugging 3")
+        print(len(CifarTestDataset.task_dataset_array))
+
         # Update the model in the train_op
         self.train_op.model = see.logs.load_model(checkpoint_index='best')
         self.train_op.model.eval()
@@ -117,6 +127,9 @@ if __name__ == '__main__':
             help='Directory of the configuration of the experiment.')
 
     parser.add_argument('--root-dir', type=str, default='meta/dataset/cifar100',
+                        help='root directory folder')
+
+    parser.add_argument('--hierarchy_json', type=str, default='meta/dataset/cifar100/hierarchy.json',
                         help='root directory folder')
     
     parser.add_argument('--train_test_split_inner', type=int, default=0.5,
@@ -146,16 +159,16 @@ if __name__ == '__main__':
     parser.add_argument('--num_classes', type=int, default=5,
             help='Number of classes')
     
-    parser.add_argument('--num_easy', type=int, default=100,
+    parser.add_argument('--num_easy', type=int, default=1000,
             help='Number of easy tasks')
 
-    parser.add_argument('--num_hard', type=int, default=100,
+    parser.add_argument('--num_hard', type=int, default=1000,
             help='Number of hard tasks')
 
-    parser.add_argument('--num_datapoints_per_class_easy', type=int, default=4,
+    parser.add_argument('--num_datapoints_per_class_easy', type=int, default=10,
             help='Number of data points per class for easy tasks')
 
-    parser.add_argument('--num_datapoints_per_class_hard', type=int, default=4,
+    parser.add_argument('--num_datapoints_per_class_hard', type=int, default=10,
             help='Number of data points per class for hard tasks')
     
     parser.add_argument('--num-workers', type=int, default=8,
@@ -190,6 +203,8 @@ if __name__ == '__main__':
                 'ExperimentType': 'BaselineExperiment', 
                 'budget': budget,
                 'no_of_classes': no_of_classes, 
+                'no_of_tasks': args.num_easy + args.num_hard,
+                'datapoints_per_task_per_taskclass': 1,
                 'no_of_easy_tasks': args.num_easy,
                 'no_of_hard_tasks': args.num_hard,
                 'no_of_datapoints_per_easy_tasks': args.num_datapoints_per_class_easy,
@@ -199,12 +214,12 @@ if __name__ == '__main__':
         
         print(config)
         
-        updated_args = CifarExperiment.update_args_from_config(args, config)
+        updated_args = CifarHierarchicalExperiment.update_args_from_config(args, config)
         
         model_copy = type(model)(3, no_of_classes) # get a new instance
         model_copy.load_state_dict(model.state_dict()) # copy weights
         train_op = ClassificationMAMLTrainOP(model_copy, updated_args)
-        exp = CifarExperiment(args, config, train_op)
+        exp = CifarHierarchicalExperiment(args, config, train_op)
         
         #---training----
         exp.setup_logs()
