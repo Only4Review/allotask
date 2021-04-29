@@ -40,7 +40,7 @@ class ClassificationMAMLTrainOP(TrainOP):
         
         self.train_adapt_steps = args.train_adapt_steps #number of adaptations steps in train mode
         self.eval_adapt_steps = args.eval_adapt_steps #num adapt steps in eval mode
-        self.no_of_classes = args.no_of_classes
+        self.no_of_classes = args.num_classes
         #self.K_shot = args.K_shot
         self.train_test_split_inner = args.train_test_split_inner
         

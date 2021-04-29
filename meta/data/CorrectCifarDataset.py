@@ -205,7 +205,7 @@ class CifarStaticDatasetHierarchy(CifarStaticDataset):
     '''
     Implementation of a static Cifar Dataset that takes into account the data structure to create hard and easy tasks
     '''
-    def __init__(self, root_dir, mode, hierarchy_json, no_of_easy, no_of_hard, classes_per_task, no_data_points_hard, no_data_points_easy):
+    def __init__(self, mode, hierarchy_json, no_of_easy, no_of_hard, classes_per_task, no_data_points_hard, no_data_points_easy):
         '''
         root_dir: directory containing the data. CAREFUL: If mode is Mix you would like to use diferent data directories.
         no_of_easy: positive integer - initial number of easy tasks to sample.
