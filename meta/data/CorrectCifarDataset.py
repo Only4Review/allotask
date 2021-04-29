@@ -31,7 +31,7 @@ def load_data_in_memory(data_root):
     class_name2index = {}
     class_data_dict = {}
     class_data_names_dict = {}
-    for index,_class in enumerate(os.listdir(data_root)): 
+    for index,_class in enumerate(sorted(os.listdir(data_root))): 
         class_root_dir = os.path.join(data_root, _class)
         class_images_names = os.listdir(class_root_dir)
         class_data_names_dict[index] = class_images_names
@@ -231,8 +231,8 @@ class CifarStaticDatasetHierarchy(CifarStaticDataset):
         self.no_of_tasks = no_of_easy + no_of_hard
         self.task_parametrization_array_hard, self.task_parametrization_array_easy = self.generate_task_parametrizations(no_of_hard, no_of_easy)
         self.task_parametrization_array = self.task_parametrization_array_hard + self.task_parametrization_array_easy
-        self.task_dataset_array_hard = self.generate_task_datasets(self.task_parametrization_array_hard, no_data_points_hard)
-        self.task_dataset_array_easy = self.generate_task_datasets(self.task_parametrization_array_easy, no_data_points_easy)
+        self.task_dataset_array_hard = self.generate_task_datasets(self.task_parametrization_array_hard, no_data_points_hard) if no_of_hard != 0 else []
+        self.task_dataset_array_easy = self.generate_task_datasets(self.task_parametrization_array_easy, no_data_points_easy) if no_of_easy != 0 else []
         self.task_dataset_array = np.concatenate((self.task_dataset_array_hard,self.task_dataset_array_easy), axis=0)
         
     def set_hierarchy(self, hierarchy_json, mode):
