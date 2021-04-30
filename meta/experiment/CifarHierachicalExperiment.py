@@ -119,7 +119,7 @@ if __name__ == '__main__':
     parser.add_argument('--root-dir', type=str, default='meta/dataset/cifar100',
                         help='root directory folder')
 
-    parser.add_argument('--hierarchy_json', type=str, default='meta/dataset/cifar100/hierarchy.json',
+    parser.add_argument('--hierarchy_json', type=str, default='meta/dataset/cifar100/hierarchy_3_hiperclass.json',
                         help='root directory folder')
     
     parser.add_argument('--train_test_split_inner', type=int, default=0.5,
