@@ -45,12 +45,12 @@ class CifarHierarchicalExperiment(CifarExperiment):
         TrainDataloader = DataLoader(CifarTrainingDataset, batch_sampler=CifarTrainingSampler, num_workers = self.args.num_workers)
 
         NUM_VAL_TASKS = 500
-        num_easy_val = int(NUM_VAL_TASKS * self.args.num_easy / (self.args.num_hard + self.args.num_easy))
-        num_hard_val = NUM_VAL_TASKS - num_easy_val
+        num_easy_val = NUM_VAL_TASKS
+        num_hard_val = NUM_VAL_TASKS
 
         NUM_VAL_DTPTSK = 20
-        num_easy_val_data = int(NUM_VAL_DTPTSK * self.args.num_datapoints_per_class_easy / (self.args.num_datapoints_per_class_easy + self.args.num_datapoints_per_class_hard))
-        num_hard_val_data = NUM_VAL_DTPTSK - num_easy_val_data
+        num_easy_val_data = self.args.num_datapoints_per_class_easy
+        num_hard_val_data = self.args.num_datapoints_per_class_hard
 
         CifarValidationDataset = CifarStaticDatasetHierarchy(
                 'Train', 
@@ -73,12 +73,11 @@ class CifarHierarchicalExperiment(CifarExperiment):
         #--------------------------------------
 
         NUM_TEST_TASKS = 1000
-        num_easy_test = int(NUM_TEST_TASKS * self.args.num_easy / (self.args.num_hard + self.args.num_easy))
-        num_hard_test = NUM_TEST_TASKS - num_easy_test
+        num_easy_test = NUM_TEST_TASKS
+        num_hard_test = NUM_TEST_TASKS
 
-        NUM_TEST_DTPTSK = 20
-        num_easy_test_data = int(NUM_TEST_DTPTSK * self.args.num_datapoints_per_class_easy / (self.args.num_datapoints_per_class_easy + self.args.num_datapoints_per_class_hard))
-        num_hard_test_data = NUM_TEST_DTPTSK - num_easy_test_data
+        num_easy_test_data = self.args.num_datapoints_per_class_easy 
+        num_hard_test_data = self.args.num_datapoints_per_class_hard
 
         CifarTestDataset = CifarStaticDatasetHierarchy(
                 'Test', 
@@ -149,10 +148,10 @@ if __name__ == '__main__':
     parser.add_argument('--num_classes', type=int, default=5,
             help='Number of classes')
     
-    parser.add_argument('--num_easy', type=int, default=1000,
+    parser.add_argument('--num_easy', type=int, default=500,
             help='Number of easy tasks')
 
-    parser.add_argument('--num_hard', type=int, default=1000,
+    parser.add_argument('--num_hard', type=int, default=500,
             help='Number of hard tasks')
 
     parser.add_argument('--num_datapoints_per_class_easy', type=int, default=4,
@@ -194,7 +193,7 @@ if __name__ == '__main__':
                 'budget': budget,
                 'no_of_classes': no_of_classes, 
                 'no_of_tasks': args.num_easy + args.num_hard,
-                'datapoints_per_task_per_taskclass': 1,
+                'datapoints_per_task_per_taskclass': args.num_datapoints_per_class_easy,
                 'no_of_easy_tasks': args.num_easy,
                 'no_of_hard_tasks': args.num_hard,
                 'no_of_datapoints_per_easy_tasks': args.num_datapoints_per_class_easy,
