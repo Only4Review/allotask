@@ -21,7 +21,6 @@ from torchmeta.modules import MetaModule
 from collections import OrderedDict
 
 #miscellaneous modules
-from tqdm import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
 import time
