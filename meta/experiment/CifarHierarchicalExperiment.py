@@ -31,6 +31,8 @@ class CifarHierarchicalExperiment(CifarExperiment):
         super(CifarHierarchicalExperiment, self).__init__(*args, **kwargs)
         
     def run(self):
+        see.logs.write_to_log_file(json.dumps(self.config))
+
         #train for the current configuration
         CifarTrainingDataset = CifarStaticDatasetHierarchy(
                 'Train', 
@@ -100,6 +102,7 @@ class CifarHierarchicalExperiment(CifarExperiment):
         test_accuracy = self.train_op.get_accuracy(TestDataloader)
         see.logs.cache['test_accuracy'] = test_accuracy
         print('test_accuracy={}'.format(test_accuracy))
+        see.logs.write_to_log_file('test_accuracy={}'.format(test_accuracy))
         
         #update the log file
         see.logs.write(see.logs.cache, name='log.pickle')

@@ -53,10 +53,12 @@ class ClassificationExperimentLogger(Logger):
                 self.cache[name][taskID].append(point)
         
         
-    def make_logdir(self):
+    def make_logdir(self, log_file_name = 'log.txt'):
         Path(self.results_folder).mkdir(parents=True, exist_ok=True)
         Path(self.log_folder).mkdir(parents=True, exist_ok=True)
         Path(self.model_folder).mkdir(parents=True, exist_ok=True)
+        self.log_file_handle = open(os.path.join(self.log_folder, log_file_name), 'a')
+
 
     def write(self, data, name='log.pickle'):
         with open(os.path.join(self.log_folder, name), 'wb') as handle:
@@ -92,3 +94,6 @@ class ClassificationExperimentLogger(Logger):
                 continue
             else:
                 os.remove(model_dir)
+
+    def write_to_log_file(self, message): 
+        self.log_file_handle.write(message)
