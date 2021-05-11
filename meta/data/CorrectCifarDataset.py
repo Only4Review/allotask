@@ -430,7 +430,6 @@ class CifarStaticNoisyTask(CifarStaticTask):
         image = class_images[image_class][image_class_index]
         print(label)
         if random.randrange(100) < self.noise_percent:
-            print('changed',label)
             _val_list=(list(range(0,self.number_of_classes))) 
             _val_list.remove(label)
             label= random.choice(_val_list) 
