@@ -281,6 +281,7 @@ class NoisyCifarStaticDataset(CifarStaticDataset):
         '''
         self.classes_per_task = classes_per_task
         self.task_additions = 0
+	self.data_json=data_json
 
         self.classes_per_task = classes_per_task        
         if no_of_easy == -1 :
@@ -292,13 +293,12 @@ class NoisyCifarStaticDataset(CifarStaticDataset):
 
         self.task_parametrization_array_hard, self.task_parametrization_array_easy = self.generate_task_parametrizations(no_of_hard, no_of_easy)
         self.task_parametrization_array = self.task_parametrization_array_hard + self.task_parametrization_array_easy
-        self.task_dataset_array_hard = self.generate_task_datasets(self.task_parametrization_array, no_data_points_hard) if no_of_easy != 0 else []
-        self.create_labels_noise(noise_percent)
+        self.task_dataset_array_hard = self.generate_noisy_task_datasets(self.task_parametrization_array, no_data_points_hard) if no_of_easy != 0 else []
         self.task_dataset_array_easy = self.generate_task_datasets(self.task_parametrization_array, no_data_points_easy) if no_of_hard != 0 else []
         self.task_dataset_array = np.concatenate((self.task_dataset_array_hard,self.task_dataset_array_easy), axis=0)
 
     def generate_task_parametrizations(self,no_of_hard, no_of_easy):
-        with open(data_json) as json_file:
+        with open(self.data_json) as json_file:
             data = json.load(json_file)
         _tasks_classes = data[mode] if 'Mix' not in mode else data['Mix']
         all_tasks = list(itertools.combinations(_tasks_classes, self.classes_per_task)) 
@@ -310,21 +310,53 @@ class NoisyCifarStaticDataset(CifarStaticDataset):
             print(ve)
         return all_tasks[0:no_of_hard], all_tasks[no_of_hard:no_of_easy]
 
-    def create_labels_noise(self, noise_percent):
-        for task in self.task_dataset_array_hard:
-            for key, value in task.index2label.items():
-                if random.randrange(100) < noise_percent:
-                    _val_list= (list(range(0,self.classes_per_task)))
-                    _val_list.remove(task.index2label[key])
-                    task.index2label[key] = random.choice(_val_list) 
-            
+    def generate_noisy_task_datasets(self, task_parametrization_array, no_of_points_per_task):
+        '''
+        Input:
+            task_parametrization_array: an array of true task parameters.
+            no_of_points_per_task: pos. int
+        Output:
+            array of SinusoidStaticTask datasets, corresponding to the input parameters.
+        '''
+        if not task_parametrization_array:
+            return []
+        else:
+            task_dataset_array = np.empty(len(task_parametrization_array), dtype = CifarStaticTask)
+    
+            for i, task_parametrization in enumerate(task_parametrization_array):
+                task_dataset_array[i] = CifarStaticNoisyTask(task_parametrization, no_of_points_per_task, self.noise_percent)
+                
+            return task_dataset_array
 
 
+class CifarStaticNoisyTask(CifarStaticTask):
+    def __init__(self, task_parametrization: list, no_of_samples : int, noise_percent: int):
+        self._task = task_parametrization #task is a list of integers. Each integer corresponds to one class.
+        self.task_classes = task_parametrizationa
+	self.noise_percent = noise_percent
+	
+        self.available_images = {}
+        for task_class in self.task_classes:
+            self.available_images[task_class] = list(np.arange(len(class_images[task_class])))
+        
+        if no_of_samples > 0:
+            self.index2class={}
+            self.index2label={}
+            self.index2class_index={}
+            _ = self.sample_datapoints(no_of_samples)
 
-
-
-
-
+    def __getitem__(self, index):
+        image_class = self.index2class[index]
+        image_label = self.index2label[index]
+        label = image_label
+        image_class_index = self.index2class_index[index]
+        image = class_images[image_class][image_class_index]
+	if random.randrange(100) < noise_percent:
+	    _val_list=(list(range(0,len(self.task_classes))))
+            _val_list.remove(label)
+            label= random.choice(_val_list) 
+        return image, label
+    
 
 
 class CifarStaticTask(Dataset):
@@ -388,10 +420,8 @@ class CifarStaticTask(Dataset):
         image_class = self.index2class[index]
         image_label = self.index2label[index]
         image_class_index = self.index2class_index[index]
-
         image = class_images[image_class][image_class_index]
         label = image_label
-        
         return image, label
 
     def __len__(self):
