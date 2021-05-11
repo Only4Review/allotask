@@ -28,14 +28,14 @@ import pickle
 
 class CifarNoisyLabelsExperiment(CifarExperiment):
     def __init__(self, *args, **kwargs):
-        super(CifarHierarchicalExperiment, self).__init__(*args, **kwargs)
+        super(CifarNoisyLabelsExperiment, self).__init__(*args, **kwargs)
         
     def run(self):
         #train for the current configuration
         CifarTrainingDataset = NoisyCifarStaticDataset(
                 'Train', 
                 self.args.split_json, 
-		self.args.noise_percent
+		self.args.noise_percent,
                 no_of_easy=self.args.num_easy, 
                 no_of_hard=self.args.num_hard,
                 classes_per_task=self.args.no_of_classes, 
@@ -56,7 +56,7 @@ class CifarNoisyLabelsExperiment(CifarExperiment):
         CifarValidationDataset = NoisyCifarStaticDataset(
                 'Val', 
                 self.args.split_json, 
-		self.args.noise_percent
+		self.args.noise_percent,
                 no_of_easy=num_easy_val, 
                 no_of_hard=num_hard_val,
                 classes_per_task=self.args.no_of_classes, 
@@ -84,7 +84,7 @@ class CifarNoisyLabelsExperiment(CifarExperiment):
         CifarTestDataset = NoisyCifarStaticDataset(
                 'Test', 
                 self.args.split_json, 
-		self.args.noise_percent
+		self.args.noise_percent,
                 no_of_easy=num_easy_test, 
                 no_of_hard=num_hard_test,
                 classes_per_task=self.args.no_of_classes, 
@@ -165,6 +165,9 @@ if __name__ == '__main__':
     
     parser.add_argument('--num-workers', type=int, default=8,
             help='Number of workers for data loading (default: 8).')
+
+    parser.add_argument('--train_test_split_inner', type=int, default=0.5,
+            help='Train test split for the inner loop. Default: 0.3')
     
     parser.add_argument('--use-cuda', type=int, default=1, help='For cuda set to 1. For cpu set to 0. Default: 1.')
     args = parser.parse_args()
