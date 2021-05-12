@@ -338,7 +338,7 @@ class ClassificationMAMLTrainOP(TrainOP):
                self._check_max_epoch(epoch) or \
                self._check_val_loss_improvement(epoch, checkpoints_epochs)
     
-    def train(self, train_dataloader, val_dataloader, lr_scheduler=None):
+    def train(self, train_dataloader, val_dataloader, lr_scheduler=None, extra_dataloaders = None):
         #set the learning rate scheduler
         if lr_scheduler==None:
             lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.meta_optimizer, 'max', factor=0.5, patience=10, verbose=True)
@@ -389,13 +389,27 @@ class ClassificationMAMLTrainOP(TrainOP):
                 mean_task_accuracy = self.get_accuracy(val_dataloader)
                 val_accuracies.append(mean_task_accuracy)
 
+                if extra_dataloaders:
+                    extra_losses=[]
+                    extra_accuracies=[]
+                    for dataloader in extra_dataloaders:
+                        extra_losses.append(self.mean_outer_loss(dataloader))
+                        extra_accuracies.append(self.get_accuracy(dataloader))
+
                 # LR scheduling
                 lr_scheduler.step(mean_task_accuracy)
 
                 elapsed_time = chop_microseconds(datetime.datetime.now() - start_time)
-                print('[time:%s][%d/%d] - train_loss: %.3f - val_loss: %.3f - val_accuracy: %.3f'
-                          % (elapsed_time, epoch, self.max_num_epochs, train_avg_loss, 
-                             val_avg_loss, mean_task_accuracy )) 
+                print('[time:{}][{}/{}] - train_loss: {:.3f} - val_loss: {:.3f} - val_accuracy: {:.3f}, extra_losses: {}, extra_accuracies: {}, '.format(
+                    elapsed_time, 
+                    epoch, 
+                    self.max_num_epochs, 
+                    train_avg_loss, 
+                    val_avg_loss, 
+                    mean_task_accuracy,
+                    extra_losses,
+                    extra_accuracies
+                    )) 
                 
                 #save the model if it achieves the best performance on the validation set
                 if val_avg_loss == min(see.logs.cache['val_avg_loss']):

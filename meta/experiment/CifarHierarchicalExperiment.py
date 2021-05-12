@@ -32,74 +32,66 @@ class CifarHierarchicalExperiment(CifarExperiment):
         
     def run(self):
         #train for the current configuration
-        CifarTrainingDataset = CifarStaticDatasetHierarchy(
-                'Train', 
+        TrainDataloader = self._prep_dataloader("Train", self.args.num_easy, self.args.num_hard)
+        
+        NUM_VAL_TASKS = 500
+        num_easy_val = int(NUM_VAL_TASKS * self.args.num_easy / (self.args.num_easy + self.args.num_hard))
+        num_hard_val = NUM_VAL_TASKS - num_easy_val
+
+        ValDataloader = self._prep_dataloader("Train", num_easy_val, num_hard_val)
+
+        HardValDataLoader = self._prep_dataloader("Train", 0, NUM_VAL_TASKS)
+        EasyValDataLoader = self._prep_dataloader("Train", NUM_VAL_TASKS, 0)
+
+        self.train_op.train(TrainDataloader, ValDataloader, extra_dataloaders = [EasyValDataLoader, HardValDataLoader])
+        see.logs.cache['train_avg_accuracy'] = self.train_op.get_accuracy(TrainDataloader)
+
+    def _prep_dataloader(self, mode, num_easy, num_hard, num_data_per_easy, num_data_per_hard):
+        cifardataset = CifarStaticDatasetHierarchy(
+                mode, 
                 self.args.hierarchy_json, 
-                no_of_easy=self.args.num_easy, 
-                no_of_hard=self.args.num_hard,
+                no_of_easy=num_easy, 
+                no_of_hard=num_hard,
                 classes_per_task=self.args.no_of_classes, 
                 no_data_points_hard = self.args.num_datapoints_per_class_hard,
                 no_data_points_easy = self.args.num_datapoints_per_class_easy,
-                )
-        CifarTrainingSampler = CifarBatchSampler(data_source = CifarTrainingDataset, no_of_tasks = 25, no_of_data_points_per_task = 100)
-        TrainDataloader = DataLoader(CifarTrainingDataset, batch_sampler=CifarTrainingSampler, num_workers = self.args.num_workers)
-
-        NUM_VAL_TASKS = 500
-        num_easy_val = NUM_VAL_TASKS
-        num_hard_val = NUM_VAL_TASKS
-
-        NUM_VAL_DTPTSK = 20
-        num_easy_val_data = self.args.num_datapoints_per_class_easy
-        num_hard_val_data = self.args.num_datapoints_per_class_hard
-
-        CifarValidationDataset = CifarStaticDatasetHierarchy(
-                'Train', 
-                self.args.hierarchy_json,
-                no_of_easy=num_easy_val, 
-                no_of_hard=num_hard_val,
-                classes_per_task=self.args.no_of_classes, 
-                no_data_points_hard = num_hard_val_data,
-                no_data_points_easy = num_easy_val_data,
-                ) 
-
-        CifarValidationSampler = CifarBatchSampler(data_source = CifarValidationDataset, no_of_tasks = None, no_of_data_points_per_task = None)
-        ValDataloader = DataLoader(CifarValidationDataset, batch_sampler=CifarValidationSampler, num_workers = self.args.num_workers)
-
-        self.train_op.train(TrainDataloader, ValDataloader)
-        see.logs.cache['train_avg_accuracy'] = self.train_op.get_accuracy(TrainDataloader)
+        )
+        cifarsampler = CifarBatchSampler(data_source = cifardataset, no_of_tasks = 25, no_of_data_points_per_task = 200)
+        dataloader = DataLoader(cifardataset, batch_sampler=cifarsampler, num_workers = self.args.num_workers)
+        return dataloader
         
     def evaluate(self):
         """this needs to be changed"""
         #--------------------------------------
 
-        NUM_TEST_TASKS = 1000
-        num_easy_test = NUM_TEST_TASKS
-        num_hard_test = NUM_TEST_TASKS
+        NUM_TEST_TASKS = 500
+        num_easy_test = int(NUM_TEST_TASKS * self.args.num_easy / (self.args.num_easy + self.args.num_hard))
+        num_hard_test = NUM_TEST_TASKS - num_easy_test
 
-        num_easy_test_data = self.args.num_datapoints_per_class_easy 
-        num_hard_test_data = self.args.num_datapoints_per_class_hard
-
-        CifarTestDataset = CifarStaticDatasetHierarchy(
-                'Test', 
-                self.args.hierarchy_json,
-                no_of_easy=num_easy_test, 
-                no_of_hard=num_hard_test,
-                classes_per_task=self.args.no_of_classes, 
-                no_data_points_hard = num_hard_test_data,
-                no_data_points_easy = num_easy_test_data,
-                )
-
-        CifarTestSampler = CifarBatchSampler(data_source = CifarTestDataset, no_of_tasks = None, no_of_data_points_per_task = None)
-        TestDataloader = DataLoader(CifarTestDataset, batch_sampler=CifarTestSampler, num_workers = self.args.num_workers)
+        TestDataloader = self._prep_dataloader("Test", num_easy_test, num_hard_test)
         
+        HardTestDataLoader = self._prep_dataloader("Test", 0, NUM_TEST_TASKS)
+        EasyTestDataLoader = self._prep_dataloader("Test", NUM_TEST_TASKS, 0)
         # Update the model in the train_op
         self.train_op.model = see.logs.load_model(checkpoint_index='best')
         self.train_op.model.eval()
         
         see.logs.cache['test_loss'] = self.train_op.mean_outer_loss(TestDataloader)
+        see.logs.cache['hard_test_loss'] = self.train_op.mean_outer_loss(HardTestDataLoader)
+        see.logs.cache['easy_test_loss'] = self.train_op.mean_outer_loss(EasyTestDataLoader)
+
         test_accuracy = self.train_op.get_accuracy(TestDataloader)
+        hard_test_accuracy = self.train_op.get_accuracy(HardTestDataloader)
+        easy_test_accuracy = self.train_op.get_accuracy(EasyTestDataloader)
+
         see.logs.cache['test_accuracy'] = test_accuracy
         print('test_accuracy={}'.format(test_accuracy))
+
+        see.logs.cache['hard_test_accuracy'] = hard_test_accuracy
+        print('test_accuracy={}'.format(hard_test_accuracy))
+
+        see.logs.cache['test_accuracy'] = easy_test_accuracy
+        print('test_accuracy={}'.format(hard_test_accuracy))
         
         #update the log file
         see.logs.write(see.logs.cache, name='log.pickle')
