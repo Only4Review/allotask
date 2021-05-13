@@ -295,8 +295,8 @@ class NoisyCifarStaticDataset(CifarStaticDataset):
 
         self.task_parametrization_array_hard, self.task_parametrization_array_easy = self.generate_task_parametrizations(no_of_hard, no_of_easy)
         self.task_parametrization_array = self.task_parametrization_array_hard + self.task_parametrization_array_easy
-        self.task_dataset_array_hard = self.generate_noisy_task_datasets(self.task_parametrization_array, no_data_points_hard) if no_of_easy != 0 else []
-        self.task_dataset_array_easy = self.generate_task_datasets(self.task_parametrization_array, no_data_points_easy) if no_of_hard != 0 else []
+        self.task_dataset_array_hard = self.generate_noisy_task_datasets(self.task_parametrization_array, no_data_points_hard) if no_of_hard != 0 else []
+        self.task_dataset_array_easy = self.generate_task_datasets(self.task_parametrization_array, no_data_points_easy) if no_of_easy != 0 else []
         self.task_dataset_array = np.concatenate((self.task_dataset_array_hard,self.task_dataset_array_easy), axis=0)
 
     def generate_task_parametrizations(self,no_of_hard, no_of_easy):
@@ -310,7 +310,7 @@ class NoisyCifarStaticDataset(CifarStaticDataset):
                 raise ValueError('Not enougt tasks available')
         except ValueError as ve:
             print(ve)
-        return all_tasks[0:no_of_hard], all_tasks[no_of_hard:no_of_easy]
+        return all_tasks[0:no_of_hard], all_tasks[no_of_hard:no_of_hard+no_of_easy]
 
     def generate_noisy_task_datasets(self, task_parametrization_array, no_of_points_per_task):
         '''
