@@ -88,10 +88,10 @@ class CifarHierarchicalExperiment(CifarExperiment):
         print('test_accuracy={}'.format(test_accuracy))
 
         see.logs.cache['hard_test_accuracy'] = hard_test_accuracy
-        print('test_accuracy={}'.format(hard_test_accuracy))
+        print('hard_test_accuracy={}'.format(hard_test_accuracy))
 
-        see.logs.cache['test_accuracy'] = easy_test_accuracy
-        print('test_accuracy={}'.format(hard_test_accuracy))
+        see.logs.cache['easy_test_accuracy'] = easy_test_accuracy
+        print('easy_test_accuracy={}'.format(easy_test_accuracy))
         
         #update the log file
         see.logs.write(see.logs.cache, name='log.pickle')
