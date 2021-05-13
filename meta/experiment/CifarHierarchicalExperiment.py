@@ -46,7 +46,7 @@ class CifarHierarchicalExperiment(CifarExperiment):
         self.train_op.train(TrainDataloader, ValDataloader, extra_dataloaders = [EasyValDataLoader, HardValDataLoader])
         see.logs.cache['train_avg_accuracy'] = self.train_op.get_accuracy(TrainDataloader)
 
-    def _prep_dataloader(self, mode, num_easy, num_hard, num_data_per_easy, num_data_per_hard):
+    def _prep_dataloader(self, mode, num_easy, num_hard):
         cifardataset = CifarStaticDatasetHierarchy(
                 mode, 
                 self.args.hierarchy_json, 
@@ -81,8 +81,8 @@ class CifarHierarchicalExperiment(CifarExperiment):
         see.logs.cache['easy_test_loss'] = self.train_op.mean_outer_loss(EasyTestDataLoader)
 
         test_accuracy = self.train_op.get_accuracy(TestDataloader)
-        hard_test_accuracy = self.train_op.get_accuracy(HardTestDataloader)
-        easy_test_accuracy = self.train_op.get_accuracy(EasyTestDataloader)
+        hard_test_accuracy = self.train_op.get_accuracy(HardTestDataLoader)
+        easy_test_accuracy = self.train_op.get_accuracy(EasyTestDataLoader)
 
         see.logs.cache['test_accuracy'] = test_accuracy
         print('test_accuracy={}'.format(test_accuracy))
