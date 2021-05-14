@@ -268,9 +268,9 @@ class CifarStaticDatasetHierarchy(CifarStaticDataset):
 class NoisyLabelsCifarStaticDataset(CifarStaticDataset):
     '''
     Implementation of static Cifar dataset with hard and easy tasks where hard tasks have noisy labels. 
-    using new (jezabel) parametrization function
+    using old parametrization function
     '''
-    def __init__(self, mode, noise_percent, no_of_easy, no_of_hard, classes_per_task, no_data_points_hard, no_data_points_easy):
+    def __init__(self,root_dir, mode, noise_percent, no_of_easy, no_of_hard, classes_per_task, no_data_points_hard, no_data_points_easy):
         '''
         no_of_easy: positive integer - initial number of easy tasks to sample.
         no_of_hard: positive integer - initial number of easy tasks to sample
@@ -279,26 +279,15 @@ class NoisyLabelsCifarStaticDataset(CifarStaticDataset):
         mode - string 'Train', 'Test','Val'
         noise_percent: positive integer - that represent the percent of hard task with noisy labels
         '''
-        self.classes_per_task = classes_per_task
-        self.task_additions = 0
-        self.data_json=data_json
-        self.mode = mode
+        no_of_tasks = no_of_easy + no_of_hard
+        no_of_data_points_per_task = 1
         self.noise_percent = noise_percent
-
-        self.classes_per_task = classes_per_task        
-        if no_of_easy == -1 :
-            self.no_of_tasks = 2000
-            self.infiniteTask = True
-        else:
-            self.no_of_tasks = no_of_easy + no_of_hard
-            self.infiniteTask = False
-
-        self.task_parametrization_array = self.generate_task_parametrizations(no_of_hard+no_of_easy)
+        super( ).__init__(root_dir, mode, no_of_tasks, classes_per_task, no_of_data_points_per_task)
+     
         self.task_parametrization_array_hard, self.task_parametrization_array_easy = self.task_parametrization_array[0:no_of_hard], self.task_parametrization_array[no_of_hard:no_of_hard+no_of_easy] 
         self.task_dataset_array_hard = self.generate_noisy_task_datasets(self.task_parametrization_array, no_data_points_hard) if no_of_hard != 0 else []
         self.task_dataset_array_easy = self.generate_task_datasets(self.task_parametrization_array, no_data_points_easy) if no_of_easy != 0 else []
         self.task_dataset_array = np.concatenate((self.task_dataset_array_hard,self.task_dataset_array_easy), axis=0)
-        return all_tasks[0:no_of_hard], all_tasks[no_of_hard:no_of_easy]
 
     def generate_noisy_task_datasets(self, task_parametrization_array, no_of_points_per_task):
         '''
@@ -530,8 +519,8 @@ class CifarBatchSampler(Sampler):
 
             yield indices_list
 
-
-
+            
+            
 """
 CifarDataset = CifarStaticDataset(root_dir, 'train', no_of_tasks=12, classes_per_task=5, no_of_data_points_per_task=42)
 CifarSampler = CifarBatchSampler(data_source = CifarDataset, no_of_tasks = None, no_of_data_points_per_task = None)
