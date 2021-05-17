@@ -34,14 +34,12 @@ class CifarHierarchicalExperiment(CifarExperiment):
         #train for the current configuration
         TrainDataloader = self._prep_dataloader("Train", self.args.num_easy, self.args.num_hard)
         
-        NUM_VAL_TASKS = 500
-        num_easy_val = int(NUM_VAL_TASKS * self.args.num_easy / (self.args.num_easy + self.args.num_hard))
-        num_hard_val = NUM_VAL_TASKS - num_easy_val
+        NUM_VAL_TASKS = 250 
 
-        ValDataloader = self._prep_dataloader("Train", num_easy_val, num_hard_val, 10, 10)
+        ValDataloader = self._prep_dataloader("Train", NUM_VAL_TASKS, NUM_VAL_TASKS, 10, 10)
 
-        HardValDataLoader = self._prep_dataloader("Train", 0, NUM_VAL_TASKS, 0, 10)
-        EasyValDataLoader = self._prep_dataloader("Train", NUM_VAL_TASKS, 0, 10, 0)
+        HardValDataLoader = self._prep_dataloader("Train", 0, 2 * NUM_VAL_TASKS, 0, 10)
+        EasyValDataLoader = self._prep_dataloader("Train", 2 * NUM_VAL_TASKS, 0, 10, 0)
 
         self.train_op.train(TrainDataloader, ValDataloader, extra_dataloaders = [EasyValDataLoader, HardValDataLoader])
         see.logs.cache['train_avg_accuracy'] = self.train_op.get_accuracy(TrainDataloader)
@@ -72,14 +70,12 @@ class CifarHierarchicalExperiment(CifarExperiment):
         """this needs to be changed"""
         #--------------------------------------
 
-        NUM_TEST_TASKS = 1000
-        num_easy_test = int(NUM_TEST_TASKS * self.args.num_easy / (self.args.num_easy + self.args.num_hard))
-        num_hard_test = NUM_TEST_TASKS - num_easy_test
+        NUM_TEST_TASKS = 500
 
-        TestDataloader = self._prep_dataloader("Test", num_easy_test, num_hard_test, 10, 10)
+        TestDataloader = self._prep_dataloader("Test", NUM_TEST_TASKS, NUM_TEST_TASKS, 10, 10)
         
-        HardTestDataLoader = self._prep_dataloader("Test", 0, NUM_TEST_TASKS, 0, 10)
-        EasyTestDataLoader = self._prep_dataloader("Test", NUM_TEST_TASKS, 0, 10, 0)
+        HardTestDataLoader = self._prep_dataloader("Test", 0, 2 * NUM_TEST_TASKS, 0, 10)
+        EasyTestDataLoader = self._prep_dataloader("Test", 2 * NUM_TEST_TASKS, 0, 10, 0)
 
         # Update the model in the train_op
         self.train_op.model = see.logs.load_model(checkpoint_index='best')
