@@ -229,8 +229,7 @@ class CifarStaticDatasetHierarchy(CifarStaticDataset):
         
     def generate_task_parametrizations(self, no_of_hard:int, no_of_easy:int):
         hard,easy =  self.hard_tasks_list, self.easy_tasks_list
-        random.shuffle(hard)
-        random.shuffle(easy)
+
         try:
             if len(hard) <= no_of_hard and not (len(easy) <= no_of_easy ):
                 raise ValueError('Not enougt hard tasks available')
@@ -240,7 +239,10 @@ class CifarStaticDatasetHierarchy(CifarStaticDataset):
                 raise ValueError('Not enougt easy tasks available')
         except ValueError as ve:
             print(ve)      
-        return hard[0:no_of_hard], easy[0:no_of_easy]
+        
+        hard_list = random.choices(self.hard_tasks_list, k = no_of_hard)
+        easy_list = random.choices(self.easy_tasks_list, k = no_of_easy)
+        return hard_list, easy_list
 
 
 class NoisyCifarStaticDataset(CifarStaticDataset):
