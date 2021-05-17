@@ -10,7 +10,7 @@ class ClassificationExperimentLogger(Logger):
         
         if config['ExperimentType']=='HandcraftedPolicy':
             print("------------------")
-            self.results_folder = 'meta/results/classification/%s/%s/%d-way/budget_%d/%s_%s_%s_%s' % (config['dataset'], 
+            self.results_folder = 'meta/results/classification/{}/{}/{}-way/budget_{}/{}_{}_{}_{}'.format(config['dataset'], 
                                                                                                       config['ExperimentType'],
                                                                                                       config['no_of_classes'],
                                                                                                       config['budget'],
@@ -20,7 +20,7 @@ class ClassificationExperimentLogger(Logger):
                                                                                                       str(config['run'])
                                                                                                       )
         elif config['ExperimentType']=='BaselineExperiment':
-            self.results_folder = 'meta/results/classification/%s/%s/%d-way/budget_%d/%d_%d_%d' % (config['dataset'], 
+            self.results_folder = 'meta/results/classification/{}/{}/{}-way/budget_{}/{}_{}_{}'.format(config['dataset'], 
                                                                                                   config['ExperimentType'],
                                                                                                   config['no_of_classes'],
                                                                                                   config['budget'],

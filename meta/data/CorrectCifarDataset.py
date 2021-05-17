@@ -76,7 +76,6 @@ class CifarStaticDataset(StaticMetaDataset):
         self.available_classes = ReadClasses(self.split_root, mode, class_name2index)
         
         self.classes_per_task = classes_per_task
-        self.task_additions = 0
         self.task_seed = 0
         if no_of_tasks == -1:
             self.no_of_tasks = 2000
@@ -98,9 +97,12 @@ class CifarStaticDataset(StaticMetaDataset):
         '''
         Implementation of generate task parametrizations in base class
         '''
-        
+        # all_tasks_list = list(itertools.combinations(self.available_classes, self.classes_per_task))
+        # random.shuffle(all_tasks_list)
+        # task_parameterisation_array = all_tasks_list[0:no_of_tasks]
+
         try:
-            available_tasks = n_choose_r(len(self.available_classes), self.classes_per_task) - self.task_additions
+            available_tasks = n_choose_r(len(self.available_classes), self.classes_per_task)
             assert available_tasks >= no_of_tasks, "no_of_tasks greater than available"
         
         except AssertionError:
@@ -112,32 +114,9 @@ class CifarStaticDataset(StaticMetaDataset):
         
         task_parameterisation_array = []
         for i in range(no_of_tasks):
-            #each task should exist only once in task parametrisation array
-            task_sampled = False
-            task_in_memory = False
-            while not(task_sampled==True and task_in_memory==False):
-                #self.task_seed += 1
-                #random.seed(self.task_seed)
-                
-                task_classes = random.sample(self.available_classes, self.classes_per_task)
-                task_sampled = True
-                
-                if task_classes in task_parameterisation_array:
-                    task_in_memory = True
-                elif self.task_parametrization_array is not None:
-                    if type(self.task_parametrization_array) is not list:
-                        # tolist() is important, otherwise, it treats the two-dim array as a 1-dim array
-                        task_in_memory = task_classes in self.task_parametrization_array.tolist()
-                    else:
-                        task_in_memory = task_classes in self.task_parametrization_array
-                else:
-                    task_in_memory=False
-            
-                
+            task_classes = random.sample(self.available_classes, self.classes_per_task)
             task_parameterisation_array.append(task_classes)
         
-        self.task_additions += len(task_parameterisation_array)
-
         return task_parameterisation_array
     
     #############################################################################
@@ -205,7 +184,7 @@ class CifarStaticDatasetHierarchy(CifarStaticDataset):
     '''
     Implementation of a static Cifar Dataset that takes into account the data structure to create hard and easy tasks
     '''
-    def __init__(self, root_dir, mode, hierarchy_json, no_of_easy, no_of_hard, classes_per_task, no_data_points_hard, no_data_points_easy):
+    def __init__(self, mode, hierarchy_json, no_of_easy, no_of_hard, classes_per_task, no_data_points_hard, no_data_points_easy):
         '''
         root_dir: directory containing the data. CAREFUL: If mode is Mix you would like to use diferent data directories.
         no_of_easy: positive integer - initial number of easy tasks to sample.
@@ -216,7 +195,6 @@ class CifarStaticDatasetHierarchy(CifarStaticDataset):
         '''
 
         self.classes_per_task = classes_per_task
-        self.task_additions = 0
         
         self.classes_per_task = classes_per_task
         self.set_hierarchy(hierarchy_json,mode)
@@ -237,7 +215,7 @@ class CifarStaticDatasetHierarchy(CifarStaticDataset):
         
     def set_hierarchy(self, hierarchy_json, mode):
         with open(hierarchy_json) as json_file: 
-            data = json.load(json_file) 
+            data = json.load(json_file)
         hyperclass_strucutre = data[mode] if 'Mix' not in mode else data['Mix'] 
         hard_tasks_list = []
         _tasks_classes = []
@@ -251,8 +229,7 @@ class CifarStaticDatasetHierarchy(CifarStaticDataset):
         
     def generate_task_parametrizations(self, no_of_hard:int, no_of_easy:int):
         hard,easy =  self.hard_tasks_list, self.easy_tasks_list
-        random.shuffle(hard)
-        random.shuffle(easy)
+
         try:
             if len(hard) <= no_of_hard and not (len(easy) <= no_of_easy ):
                 raise ValueError('Not enougt hard tasks available')
@@ -262,7 +239,10 @@ class CifarStaticDatasetHierarchy(CifarStaticDataset):
                 raise ValueError('Not enougt easy tasks available')
         except ValueError as ve:
             print(ve)      
-        return hard[0:no_of_hard], easy[0:no_of_easy]
+        
+        hard_list = random.choices(self.hard_tasks_list, k = no_of_hard)
+        easy_list = random.choices(self.easy_tasks_list, k = no_of_easy)
+        return hard_list, easy_list
 
 
 class NoisyCifarStaticDataset(CifarStaticDataset):
@@ -280,7 +260,6 @@ class NoisyCifarStaticDataset(CifarStaticDataset):
         noise_percent: positive integer - that represent the percent of hard task with noisy labels
         '''
         self.classes_per_task = classes_per_task
-        self.task_additions = 0
         self.data_json=data_json
         self.mode = mode
         self.noise_percent = noise_percent
