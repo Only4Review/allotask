@@ -389,9 +389,10 @@ class ClassificationMAMLTrainOP(TrainOP):
                 mean_task_accuracy = self.get_accuracy(val_dataloader)
                 val_accuracies.append(mean_task_accuracy)
 
+                extra_losses=[]
+                extra_accuracies=[]
+
                 if extra_dataloaders:
-                    extra_losses=[]
-                    extra_accuracies=[]
                     for dataloader in extra_dataloaders:
                         extra_losses.append(self.mean_outer_loss(dataloader))
                         extra_accuracies.append(self.get_accuracy(dataloader))

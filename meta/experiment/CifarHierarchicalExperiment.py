@@ -38,25 +38,33 @@ class CifarHierarchicalExperiment(CifarExperiment):
         num_easy_val = int(NUM_VAL_TASKS * self.args.num_easy / (self.args.num_easy + self.args.num_hard))
         num_hard_val = NUM_VAL_TASKS - num_easy_val
 
-        ValDataloader = self._prep_dataloader("Train", num_easy_val, num_hard_val)
+        ValDataloader = self._prep_dataloader("Train", num_easy_val, num_hard_val, 10, 10)
 
-        HardValDataLoader = self._prep_dataloader("Train", 0, NUM_VAL_TASKS)
-        EasyValDataLoader = self._prep_dataloader("Train", NUM_VAL_TASKS, 0)
+        HardValDataLoader = self._prep_dataloader("Train", 0, NUM_VAL_TASKS, 0, 10)
+        EasyValDataLoader = self._prep_dataloader("Train", NUM_VAL_TASKS, 0, 10, 0)
 
         self.train_op.train(TrainDataloader, ValDataloader, extra_dataloaders = [EasyValDataLoader, HardValDataLoader])
         see.logs.cache['train_avg_accuracy'] = self.train_op.get_accuracy(TrainDataloader)
 
-    def _prep_dataloader(self, mode, num_easy, num_hard):
+    def _prep_dataloader(self, mode, num_easy, num_hard, nde=None, ndh=None):
+        if nde is None:
+                nde = self.args.num_datapoints_per_class_easy
+        if ndh is None: 
+                ndh = self.args.num_datapoints_per_class_hard
         cifardataset = CifarStaticDatasetHierarchy(
                 mode, 
                 self.args.hierarchy_json, 
                 no_of_easy=num_easy, 
                 no_of_hard=num_hard,
                 classes_per_task=self.args.no_of_classes, 
-                no_data_points_hard = self.args.num_datapoints_per_class_hard,
-                no_data_points_easy = self.args.num_datapoints_per_class_easy,
+                no_data_points_hard = ndh,
+                no_data_points_easy = nde,
         )
-        cifarsampler = CifarBatchSampler(data_source = cifardataset, no_of_tasks = 25, no_of_data_points_per_task = 200)
+
+        if mode in ["Val", "Test"]:
+                cifarsampler = CifarBatchSampler(data_source = cifardataset, no_of_tasks = None, no_of_data_points_per_task = None)
+        else:
+                cifarsampler = CifarBatchSampler(data_source = cifardataset, no_of_tasks = 25, no_of_data_points_per_task = 200)
         dataloader = DataLoader(cifardataset, batch_sampler=cifarsampler, num_workers = self.args.num_workers)
         return dataloader
         
@@ -64,14 +72,15 @@ class CifarHierarchicalExperiment(CifarExperiment):
         """this needs to be changed"""
         #--------------------------------------
 
-        NUM_TEST_TASKS = 500
+        NUM_TEST_TASKS = 1000
         num_easy_test = int(NUM_TEST_TASKS * self.args.num_easy / (self.args.num_easy + self.args.num_hard))
         num_hard_test = NUM_TEST_TASKS - num_easy_test
 
-        TestDataloader = self._prep_dataloader("Test", num_easy_test, num_hard_test)
+        TestDataloader = self._prep_dataloader("Test", num_easy_test, num_hard_test, 10, 10)
         
-        HardTestDataLoader = self._prep_dataloader("Test", 0, NUM_TEST_TASKS)
-        EasyTestDataLoader = self._prep_dataloader("Test", NUM_TEST_TASKS, 0)
+        HardTestDataLoader = self._prep_dataloader("Test", 0, NUM_TEST_TASKS, 0, 10)
+        EasyTestDataLoader = self._prep_dataloader("Test", NUM_TEST_TASKS, 0, 10, 0)
+
         # Update the model in the train_op
         self.train_op.model = see.logs.load_model(checkpoint_index='best')
         self.train_op.model.eval()
@@ -125,8 +134,8 @@ if __name__ == '__main__':
     parser.add_argument('--train-adapt-steps', type=int, default=1,
             help='Number of inner gradient updates during training. Default: 1')
     
-    parser.add_argument('--eval-adapt-steps', type=int, default=1,
-            help='Number of inner gradient updates during evaluation. Default: 1')
+    parser.add_argument('--eval-adapt-steps', type=int, default=5,
+            help='Number of inner gradient updates during evaluation. Default: 5')
     
     parser.add_argument('--meta_lr', type=float, default=0.001,
             help='The learning rate of the meta optimiser (outer loop lr). Default: 0.001')
