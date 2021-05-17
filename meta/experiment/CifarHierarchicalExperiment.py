@@ -38,10 +38,10 @@ class CifarHierarchicalExperiment(CifarExperiment):
 
         ValDataloader = self._prep_dataloader("Train", NUM_VAL_TASKS, NUM_VAL_TASKS, 10, 10)
 
-        HardValDataLoader = self._prep_dataloader("Train", 0, 2 * NUM_VAL_TASKS, 0, 10)
-        EasyValDataLoader = self._prep_dataloader("Train", 2 * NUM_VAL_TASKS, 0, 10, 0)
+        # HardValDataLoader = self._prep_dataloader("Train", 0, 2 * NUM_VAL_TASKS, 0, 10)
+        # EasyValDataLoader = self._prep_dataloader("Train", 2 * NUM_VAL_TASKS, 0, 10, 0)
 
-        self.train_op.train(TrainDataloader, ValDataloader, extra_dataloaders = [EasyValDataLoader, HardValDataLoader])
+        self.train_op.train(TrainDataloader, ValDataloader) # , extra_dataloaders = [EasyValDataLoader, HardValDataLoader])
         see.logs.cache['train_avg_accuracy'] = self.train_op.get_accuracy(TrainDataloader)
 
     def _prep_dataloader(self, mode, num_easy, num_hard, nde=None, ndh=None):
