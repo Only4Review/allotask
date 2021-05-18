@@ -128,8 +128,8 @@ if __name__ == '__main__':
     parser.add_argument('--train-adapt-steps', type=int, default=1,
             help='Number of inner gradient updates during training. Default: 1')
     
-    parser.add_argument('--eval-adapt-steps', type=int, default=1,
-            help='Number of inner gradient updates during evaluation. Default: 1')
+    parser.add_argument('--eval-adapt-steps', type=int, default=5,
+            help='Number of inner gradient updates during evaluation. Default: 5')
     
     parser.add_argument('--meta_lr', type=float, default=0.001,
             help='The learning rate of the meta optimiser (outer loop lr). Default: 0.001')

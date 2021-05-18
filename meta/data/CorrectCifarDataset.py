@@ -241,7 +241,13 @@ class CifarStaticDatasetHierarchy(CifarStaticDataset):
             print(ve)      
         
         hard_list = random.choices(self.hard_tasks_list, k = no_of_hard)
+        hard_list = [list(x) for x in hard_list]
+        for item in hard_list:
+            random.shuffle(item)
         easy_list = random.choices(self.easy_tasks_list, k = no_of_easy)
+        easy_list = [list(x) for x in easy_list]
+        for item in easy_list:
+            random.shuffle(item)
         return hard_list, easy_list
 
 
