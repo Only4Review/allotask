@@ -54,6 +54,8 @@ class CifarNoisyLabelsExperiment(CifarExperiment):
                 no_data_points_hard = ndh,
                 no_data_points_easy = nde
         ) 
+
+        print("\n", "In mode {}, the length of the dataset is {}".format(mode, len(cifardataset)), "\n")
         if mode in ["Val", "Test"]:
                 cifarsampler = CifarBatchSampler(data_source = cifardataset, no_of_tasks = None, no_of_data_points_per_task = None)
         else:
@@ -106,7 +108,7 @@ if __name__ == '__main__':
     parser.add_argument('--root-dir', type=str, default='meta/dataset/cifar100',
                         help='root directory folder')
 
-    parser.add_argument('--noise_percent', type=int, default=50,
+    parser.add_argument('--noise_percent', type=int, default=0,
                         help='percent of noise in the labels')
     
     parser.add_argument('--split_json', type=str, default='meta/dataset/cifar100/data_split.json',
@@ -122,7 +124,7 @@ if __name__ == '__main__':
             help='Number of inner gradient updates during training. Default: 1')
     
     parser.add_argument('--eval-adapt-steps', type=int, default=1,
-            help='Number of inner gradient updates during evaluation. Default: 1')
+            help='Number of inner gradient updates during evaluation. Default: 5')
     
     parser.add_argument('--meta_lr', type=float, default=0.001,
             help='The learning rate of the meta optimiser (outer loop lr). Default: 0.001')
