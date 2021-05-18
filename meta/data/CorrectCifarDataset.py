@@ -308,6 +308,10 @@ class NoisyCifarStaticDataset(CifarStaticDataset):
 
         all_tasks = random.choices(all_tasks, k = no_of_hard + no_of_easy)
 
+        all_tasks = [list(x) for x in all_tasks]
+        for item in all_tasks:
+            random.shuffle(item)
+
         return all_tasks[0:no_of_hard], all_tasks[no_of_hard:no_of_hard+no_of_easy]
 
     def generate_noisy_task_datasets(self, task_parametrization_array, no_of_points_per_task):
