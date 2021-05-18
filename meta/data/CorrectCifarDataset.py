@@ -265,48 +265,6 @@ class CifarStaticDatasetHierarchy(CifarStaticDataset):
             print(ve)      
         return hard[0:no_of_hard], easy[0:no_of_easy]
 
-class NoisyLabelsCifarStaticDataset(CifarStaticDataset):
-    '''
-    Implementation of static Cifar dataset with hard and easy tasks where hard tasks have noisy labels. 
-    using old parametrization function
-    '''
-    def __init__(self,root_dir, mode, noise_percent, no_of_easy, no_of_hard, classes_per_task, no_data_points_hard, no_data_points_easy):
-        '''
-        no_of_easy: positive integer - initial number of easy tasks to sample.
-        no_of_hard: positive integer - initial number of easy tasks to sample
-        no_of_data_points_hard: positive integer - number of data points in hard tasks
-        no_of_data_points_easy:  positive integer - number of data points per easy tasks
-        mode - string 'Train', 'Test','Val'
-        noise_percent: positive integer - that represent the percent of hard task with noisy labels
-        '''
-        no_of_tasks = no_of_easy + no_of_hard
-        no_of_data_points_per_task = 1
-        self.noise_percent = noise_percent
-        super( ).__init__(root_dir, mode, no_of_tasks, classes_per_task, no_of_data_points_per_task)
-     
-        self.task_parametrization_array_hard, self.task_parametrization_array_easy = self.task_parametrization_array[0:no_of_hard], self.task_parametrization_array[no_of_hard:no_of_hard+no_of_easy] 
-        self.task_dataset_array_hard = self.generate_noisy_task_datasets(self.task_parametrization_array, no_data_points_hard) if no_of_hard != 0 else []
-        self.task_dataset_array_easy = self.generate_task_datasets(self.task_parametrization_array, no_data_points_easy) if no_of_easy != 0 else []
-        self.task_dataset_array = np.concatenate((self.task_dataset_array_hard,self.task_dataset_array_easy), axis=0)
-
-    def generate_noisy_task_datasets(self, task_parametrization_array, no_of_points_per_task):
-        '''
-        Input:
-            task_parametrization_array: an array of true task parameters.
-            no_of_points_per_task: pos. int
-        Output:
-            array of SinusoidStaticTask datasets, corresponding to the input parameters.
-        '''
-        if not task_parametrization_array:
-            return []
-        else:
-            task_dataset_array = np.empty(len(task_parametrization_array), dtype = CifarStaticTask)
-    
-            for i, task_parametrization in enumerate(task_parametrization_array):
-                task_dataset_array[i] = CifarStaticNoisyTask(task_parametrization, no_of_points_per_task, self.noise_percent)
-                
-            return task_dataset_array
-
 
 class NoisyCifarStaticDataset(CifarStaticDataset):
     '''
@@ -338,21 +296,22 @@ class NoisyCifarStaticDataset(CifarStaticDataset):
 
         self.task_parametrization_array_hard, self.task_parametrization_array_easy = self.generate_task_parametrizations(no_of_hard, no_of_easy)
         self.task_parametrization_array = self.task_parametrization_array_hard + self.task_parametrization_array_easy
-        self.task_dataset_array_hard = self.generate_noisy_task_datasets(self.task_parametrization_array, no_data_points_hard) if no_of_hard != 0 else []
-        self.task_dataset_array_easy = self.generate_task_datasets(self.task_parametrization_array, no_data_points_easy) if no_of_easy != 0 else []
+        self.task_dataset_array_hard = self.generate_noisy_task_datasets(self.task_parametrization_array_hard, no_data_points_hard) if no_of_hard != 0 else []
+        self.task_dataset_array_easy = self.generate_task_datasets(self.task_parametrization_array_easy, no_data_points_easy) if no_of_easy != 0 else []
         self.task_dataset_array = np.concatenate((self.task_dataset_array_hard,self.task_dataset_array_easy), axis=0)
 
     def generate_task_parametrizations(self,no_of_hard, no_of_easy):
         with open(self.data_json) as json_file:
             data = json.load(json_file)
         _tasks_classes = data[self.mode] if 'Mix' not in self.mode else data['Mix']
-        all_tasks = list(itertools.combinations(_tasks_classes, self.classes_per_task)) 
-        random.shuffle(all_tasks)
-        try:
-            if len(all_tasks) <= (no_of_hard + no_of_easy):
-                raise ValueError('Not enougt tasks available')
-        except ValueError as ve:
-            print(ve)
+        all_tasks = list(itertools.combinations(_tasks_classes, self.classes_per_task))
+
+        all_tasks = random.choices(all_tasks, k = no_of_hard + no_of_easy)
+
+        all_tasks = [list(x) for x in all_tasks]
+        for item in all_tasks:
+            random.shuffle(item)
+
         return all_tasks[0:no_of_hard], all_tasks[no_of_hard:no_of_hard+no_of_easy]
 
     def generate_noisy_task_datasets(self, task_parametrization_array, no_of_points_per_task):
@@ -458,7 +417,6 @@ class CifarStaticNoisyTask(CifarStaticTask):
         label = image_label
         image_class_index = self.index2class_index[index]
         image = class_images[image_class][image_class_index]
-        print(label)
         if random.randrange(100) < self.noise_percent:
             _val_list=(list(range(0,len(self.task_classes)))) 
             _val_list.remove(label)
