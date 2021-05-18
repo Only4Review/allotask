@@ -295,6 +295,7 @@ class NoisyCifarStaticDataset(CifarStaticDataset):
             self.infiniteTask = False
 
         self.task_parametrization_array_hard, self.task_parametrization_array_easy = self.generate_task_parametrizations(no_of_hard, no_of_easy)
+        self.task_parametrization_array = self.task_parametrization_array_hard + self.task_parametrization_array_easy
         self.task_dataset_array_hard = self.generate_noisy_task_datasets(self.task_parametrization_array_hard, no_data_points_hard) if no_of_hard != 0 else []
         self.task_dataset_array_easy = self.generate_task_datasets(self.task_parametrization_array_easy, no_data_points_easy) if no_of_easy != 0 else []
         self.task_dataset_array = np.concatenate((self.task_dataset_array_hard,self.task_dataset_array_easy), axis=0)
@@ -305,7 +306,7 @@ class NoisyCifarStaticDataset(CifarStaticDataset):
         _tasks_classes = data[self.mode] if 'Mix' not in self.mode else data['Mix']
         all_tasks = list(itertools.combinations(_tasks_classes, self.classes_per_task))
 
-        all_tasks = random.choices(all_tasks, k = no_of_hard + no_of easy)
+        all_tasks = random.choices(all_tasks, k = no_of_hard + no_of_easy)
 
         return all_tasks[0:no_of_hard], all_tasks[no_of_hard:no_of_hard+no_of_easy]
 
@@ -412,7 +413,6 @@ class CifarStaticNoisyTask(CifarStaticTask):
         label = image_label
         image_class_index = self.index2class_index[index]
         image = class_images[image_class][image_class_index]
-        print(label)
         if random.randrange(100) < self.noise_percent:
             _val_list=(list(range(0,len(self.task_classes)))) 
             _val_list.remove(label)
