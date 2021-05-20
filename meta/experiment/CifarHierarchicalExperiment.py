@@ -81,9 +81,9 @@ class CifarHierarchicalExperiment(CifarExperiment):
         self.train_op.model = see.logs.load_model(checkpoint_index='best')
         self.train_op.model.eval()
         
-        see.logs.cache['test_loss'] = self.train_op.mean_outer_loss(TestDataloader)
-        see.logs.cache['hard_test_loss'] = self.train_op.mean_outer_loss(HardTestDataLoader)
-        see.logs.cache['easy_test_loss'] = self.train_op.mean_outer_loss(EasyTestDataLoader)
+        see.logs.cache['test_loss'] = self.train_op.mean_outer_loss(TestDataloader, mode = "Testing")
+        see.logs.cache['hard_test_loss'] = self.train_op.mean_outer_loss(HardTestDataLoader, mode = "Testing")
+        see.logs.cache['easy_test_loss'] = self.train_op.mean_outer_loss(EasyTestDataLoader, mode = "Testing")
 
         test_accuracy = self.train_op.get_accuracy(TestDataloader)
         hard_test_accuracy = self.train_op.get_accuracy(HardTestDataLoader)
