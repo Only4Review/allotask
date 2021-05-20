@@ -184,6 +184,7 @@ if __name__ == '__main__':
                 'dataset': 'Cifar', 
                 'ExperimentType': 'BaselineExperiment', 
                 'budget': budget,
+                'noise_percentage': args.noise_percent,
                 'no_of_classes': no_of_classes, 
                 'no_of_tasks': args.num_easy + args.num_hard,
                 'datapoints_per_task_per_taskclass': args.num_datapoints_per_class_easy,
