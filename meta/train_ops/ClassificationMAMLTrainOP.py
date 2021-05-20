@@ -241,7 +241,7 @@ class ClassificationMAMLTrainOP(TrainOP):
 
         return empirical_mean
     
-    def mean_outer_loss(self, dataloader, train_test_split_ratio = None, no_of_adaptation_points = None):
+    def mean_outer_loss(self, dataloader, train_test_split_ratio = None, no_of_adaptation_points = None, mode = "foo"):
         """
         :param dataloader: torch.utils.data.Dataloader
         :param train_test_split_ratio: a number between 0 and 1 specifying the ratio. If None no_of_adaptation_points is used
@@ -252,12 +252,11 @@ class ClassificationMAMLTrainOP(TrainOP):
         """
 
         mean_outer_loss = torch.tensor(0., device=self.device)
+        n_data_seen = 0
         for task_idx, (task_data, task_labels) in enumerate(dataloader):
-            #train_input, train_target, test_input, test_target = self.DataloaderProcessing(task_data, self.N_way, self.K_shot)
-            #train_input, test_input = self.train_test_split(task_data, train_test_split_ratio, no_of_adaptation_points)
-            #train_target, test_target = self.train_test_split(task_labels, train_test_split_ratio, no_of_adaptation_points)
             train_input, test_input, train_target, test_target = self.train_test_input_target_split(task_data, task_labels, train_test_split_ratio, no_of_adaptation_points)
-            
+            n_data_seen += len(test_target)
+
             train_input = train_input.to(device=self.device)
             train_target = train_target.to(device=self.device)
             test_input = test_input.to(device=self.device)
@@ -269,11 +268,16 @@ class ClassificationMAMLTrainOP(TrainOP):
             """Evaluation"""
             with torch.set_grad_enabled(self.model.training):
                 test_logit = self.OOM_safe_model(test_input, params=params)
-                task_loss = self.loss_func(test_logit, test_target)
+                if self.model.training:
+                    task_loss = self.loss_func(test_logit, test_target) * len(test_target)
+                else:
+                    task_loss = self.loss_func(test_logit, test_target)
                 mean_outer_loss += task_loss
                 
-        
-        mean_outer_loss /= task_idx+1
+        if self.model.training:
+            mean_outer_loss /= n_data_seen
+        else:
+            mean_outer_loss /= task_idx+1
         return mean_outer_loss
         
     
@@ -282,7 +286,7 @@ class ClassificationMAMLTrainOP(TrainOP):
         # Inputs: batch
         
         self.model.zero_grad() 
-        batch_avg_loss = self.mean_outer_loss(dataloader)
+        batch_avg_loss = self.mean_outer_loss(dataloader, mode = "Training")
         
         """meta_update"""
         batch_avg_loss.backward()
@@ -382,7 +386,7 @@ class ClassificationMAMLTrainOP(TrainOP):
                 if train_dataloader.dataset.infiniteTask:
                     train_dataloader.dataset.reinitialize() # this leads to infinite tasks in the dataset
                 self.model.eval()
-                val_avg_loss = self.mean_outer_loss(val_dataloader)
+                val_avg_loss = self.mean_outer_loss(val_dataloader, mode = "Validation")
                 val_losses.append(val_avg_loss)
                 see.logs.update_cache(val_avg_loss, 'val_avg_loss')               
 
@@ -394,7 +398,7 @@ class ClassificationMAMLTrainOP(TrainOP):
 
                 if extra_dataloaders:
                     for dataloader in extra_dataloaders:
-                        extra_losses.append(self.mean_outer_loss(dataloader))
+                        extra_losses.append(self.mean_outer_loss(dataloader, mode = "Validation"))
                         extra_accuracies.append(self.get_accuracy(dataloader))
 
                 # LR scheduling
