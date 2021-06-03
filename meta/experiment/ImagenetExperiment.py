@@ -122,11 +122,8 @@ if __name__ == '__main__':
     parser.add_argument('--exp_config_dir', type=str, default='meta/experiment/config_experiment1.json',
             help='Directory of the configuration of the experiment.')
 
-    # parser.add_argument('--root-dir', type=str, default='meta/dataset/Imagenet100',
-    #                     help='root directory folder')
-    
-    parser.add_argument('--root-dir', type=str, default='/code/MAML-Pytorch/miniimagenet',
-                        help='root directory folder')
+    parser.add_argument('--root-dir', type=str, default='meta/dataset//miniimagenet',
+                         help='root directory folder')
     
     parser.add_argument('--train_test_split_inner', type=int, default=0.5,
             help='Train test split for the inner loop. Default: 0.3')
@@ -154,6 +151,10 @@ if __name__ == '__main__':
     
     parser.add_argument('--num-workers', type=int, default=0,
             help='Number of workers for data loading (default: 0).')
+
+    parser.add_argument('--num_classes', type=int, default=5,
+            help='Number of classes')
+
     
     parser.add_argument('--use-cuda', type=int, default=1, help='For cuda set to 1. For cpu set to 0. Default: 1.')
 
