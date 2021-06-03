@@ -66,7 +66,7 @@ def ReadClasses(root_dir, phase, class_name2index):
     class_names = pd.read_csv(os.path.join(root_dir,phase+'.csv')).label.unique()    
     return [class_name2index[name] for name in class_names] ## list of index [integers] of classes for the phase
 
-root_dir = 'meta/dataset/cifar100'# '/meta/dataset/miniimagenet'
+root_dir = 'meta/dataset/miniimagenet'
 class_images, class_images_names, class_index2name, class_name2index = load_data_in_memory(root_dir)
 
 
