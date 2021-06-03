@@ -75,8 +75,8 @@ These experiments show that:
 
  1) If tasks are homogeneous, there is a uniform optimal allocation, whereby all tasks get the same amount of data. 
 
-2) At fixed budget, there is a trade-off between number of tasks and number of data points per task, with a unique and constant optimum *(This two results can be tested by running  CifarExperiment.py,  ImagenetExperiment.py, or LinearRegression.py; to check specific training conditions please check appendix A1 and A2 of the paper)*  
+2) At fixed budget, there is a trade-off between number of tasks and number of data points per task, with a unique and constant optimum *(This two results can be tested by running  CifarExperiment.py,  ImagenetExperiment.py, or LinearRegression.py; to check specific training conditions please check appendix A1 and A2 of the paper.)*  
 
  3) When trained separately, harder task should get more data, at the cost of a smaller number of tasks;
 
- 4) When training on a mixture of easy and hard tasks, more data should be allocated to easy tasks. *(This two results can be tested by running  CifarNoisyLabelsExperiment.py  or CifarHierarchicalExperiment.py; to check specific training conditions please check appendix A2 and A3 of the paper )*
+ 4) When training on a mixture of easy and hard tasks, more data should be allocated to easy tasks. *(This two results can be tested by running  CifarNoisyLabelsExperiment.py  or CifarHierarchicalExperiment.py; to check specific training conditions please check appendix A2 and A3 of the paper.)*
