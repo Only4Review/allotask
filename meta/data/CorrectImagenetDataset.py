@@ -46,7 +46,7 @@ def load_data_in_memory(data_root):
     for index, _class in enumerate(df.label.unique()): ##index, names of classes
         class_images_names = df.loc[df.label == _class].filename.values ## list of image filenames belonging to _class
         class_data_names_dict[index] = class_images_names
-        class_images = [] ;  print(index)
+        class_images = [] ;  #print(index)
         for image in class_images_names: ## for each image belonging to _class
                 img = np.array(transform(Image.open(os.path.join(data_root,'images', image)).convert('RGB'))) ## convert image to np.array
                 # img = np.rollaxis(img, 2, 0)  ## reformat in correct format NO NEED IF ALREADY TENSOR
