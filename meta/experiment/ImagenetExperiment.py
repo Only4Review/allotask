@@ -14,7 +14,7 @@ from torch.utils.data.dataloader import DataLoader
 from meta.data.CorrectImagenetDataset import ImagenetStaticDataset, ImagenetBatchSampler
 
 from torch.nn import CrossEntropyLoss
-from meta.meta_learners.ClassificationMetaModel import ConvMetaModel
+from meta.meta_learners.ClassificationMetaModel import ConvMetaModelImagenet
 from meta.utils.ClassificationExperimentLogger import ClassificationExperimentLogger
 import meta.CONSTANTS as see #contains the global logger: see.logs
 
@@ -180,7 +180,7 @@ if __name__ == '__main__':
     budget = args.budget
     runs = 5
     no_of_classes = 5 #it stands for N_way
-    model = ConvMetaModel(3, no_of_classes) #instantiate the base learner
+    model = ConvMetaModelImagenet(3, no_of_classes) #instantiate the base learner
     
 
     no_of_datapoints_per_taskclass_list = [2, 4, 6, 8, 10,12,14, 20, 50, 100, 200, 500, 1000]
