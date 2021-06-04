@@ -81,12 +81,10 @@ class ImagenetExperiment(Experiment):
         #train for the current configuration
         ImagenetTrainingDataset = ImagenetStaticDataset(self.args.root_dir, 'train', no_of_tasks=self.args.no_of_tasks, classes_per_task=self.args.no_of_classes, no_of_data_points_per_task=self.args.datapoints_per_task_per_taskclass)
         ImagenetTrainingSampler = ImagenetBatchSampler(data_source = ImagenetTrainingDataset, no_of_tasks = 25, no_of_data_points_per_task = 50)
-        # ImagenetTrainingSampler = ImagenetBatchSampler(data_source = ImagenetTrainingDataset, no_of_tasks = 5, no_of_data_points_per_task = 50)
 
         TrainDataloader = DataLoader(ImagenetTrainingDataset, batch_sampler=ImagenetTrainingSampler, num_workers = self.args.num_workers)
         
         ImagenetValidationDataset = ImagenetStaticDataset(self.args.root_dir, 'val', no_of_tasks=500, classes_per_task=self.args.no_of_classes, no_of_data_points_per_task=10)
-        # ImagenetValidationSampler = ImagenetBatchSampler(data_source = ImagenetValidationDataset, no_of_tasks = 100, no_of_data_points_per_task = 50)
         ImagenetValidationSampler = ImagenetBatchSampler(data_source = ImagenetValidationDataset, no_of_tasks = None, no_of_data_points_per_task = None)
         ValDataloader = DataLoader(ImagenetValidationDataset, batch_sampler=ImagenetValidationSampler, num_workers = self.args.num_workers)
 
@@ -97,7 +95,6 @@ class ImagenetExperiment(Experiment):
         """this needs to be changed"""
         #--------------------------------------
         ImagenetTestDataset = ImagenetStaticDataset(self.args.root_dir, 'test', no_of_tasks = 500, classes_per_task=self.args.no_of_classes, no_of_data_points_per_task = 10)
-        # ImagenetTestSampler = ImagenetBatchSampler(data_source = ImagenetTestDataset, no_of_tasks = None, no_of_data_points_per_task = 500)
         ImagenetTestSampler = ImagenetBatchSampler(data_source = ImagenetTestDataset, no_of_tasks = None, no_of_data_points_per_task = None)
         TestDataloader = DataLoader(ImagenetTestDataset, batch_sampler=ImagenetTestSampler, num_workers = self.args.num_workers)
         
