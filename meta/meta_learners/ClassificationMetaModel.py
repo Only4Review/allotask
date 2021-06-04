@@ -34,6 +34,7 @@ class ConvMetaModel(MetaModule):
         features = self.features(inputs, params=self.get_subdict(params, 'features'))
         features = features.view((features.size(0), -1))
         logits = self.classifier(features, params=self.get_subdict(params, 'classifier'))
+        return logits
         
 class ConvMetaModelImagenet(MetaModule):
     def __init__(self, in_channels, out_features, hidden_sizes=[32] * 4, kernel_sizes=[3] * 4, pooling = [2]*4): ## Imagenet
@@ -49,10 +50,9 @@ class ConvMetaModelImagenet(MetaModule):
         )
 
         self.classifier = MetaLinear(800, out_features)
-
-
+      
     def forward(self, inputs, params=None):
         features = self.features(inputs, params=self.get_subdict(params, 'features')); #print(features.size())
         features = features.view((features.size(0), -1)); #print(features.size())
         logits = self.classifier(features, params=self.get_subdict(params, 'classifier'))
-        return logits        return logits 
+        return logits  
