@@ -104,7 +104,6 @@ class ImagenetExperiment(Experiment):
         
         see.logs.cache['test_loss'] = self.train_op.mean_outer_loss(TestDataloader)
         see.logs.cache['test_accuracy'] = self.train_op.get_accuracy(TestDataloader)
-        # print("test_accuracy{}".format(test_accuracy))
         #update the log file
         see.logs.write(see.logs.cache, name='log.pickle')
         #--------------------------------------
