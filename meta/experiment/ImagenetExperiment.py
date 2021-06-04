@@ -139,7 +139,7 @@ if __name__ == '__main__':
     parser.add_argument('--meta_lr', type=float, default=0.001,
             help='The learning rate of the meta optimiser (outer loop lr). Default: 0.001')
     
-    parser.add_argument('--hidden-size', type=int, default=64,
+    parser.add_argument('--hidden-size', type=int, default=32,
             help='Number of channels for each convolutional layer (default: 64).')
     
     parser.add_argument('--max-num-epochs', type=int, default=60000,
@@ -199,7 +199,6 @@ if __name__ == '__main__':
             exp.run()
             
             #---evaluation---
-            #exp.setup_logs(init=False)
             exp.evaluate()
             
             
