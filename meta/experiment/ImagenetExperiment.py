@@ -172,7 +172,6 @@ if __name__ == '__main__':
         print('Device: ', args.device)
     
     
-    # budget = 30000
     budget = args.budget
     runs = 5
     no_of_classes = 5 #it stands for N_way
